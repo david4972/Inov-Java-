@@ -9,7 +9,7 @@ import java.util.Currency;
 import java.util.Scanner;
 import yahoofinance.YahooFinance;
 
-import static java.math.BigDecimal.ONE;
+//import static java.math.BigDecimal.ONE;
 //import yahoofinance.exchanges.*;
 
 
