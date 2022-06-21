@@ -31,9 +31,9 @@ public class Inov {
         return conn;
     }
 
-    static String intro(String text) {
-        text = "WELCOME TO INOV!!!!!! We are a SaaS startup that build creative, innovative and simpler apis for more transparent financial services. We only operate in the US as of right now but we look to expand.";
-        return text;
+    public static void intro() {
+        System.out.println("WELCOME TO INOV!!!!!! We are a SaaS startup that build creative, innovative and simpler apis for more transparent financial services. " +
+                "We only operate in the US as of right now but we look to expand.");
     }
 
     public String create_debit_account(String name, String email, String address) throws NoSuchAlgorithmException {
@@ -505,6 +505,10 @@ public class Inov {
         state.close();
         connect().close();
         return "Transaction complete";
+    }
+    
+    public static void main(String[] args) {
+        Inov.intro();
     }
 
 
