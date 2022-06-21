@@ -17,6 +17,7 @@ public class Inov {
 
     Currency usa = Currency.getInstance("USD"); //base currency (US only)
     invp pay = new invp(); //payment processor
+    BDMS cur = new BDMS();// database system
 
 
     public Connection connect() {
@@ -519,6 +520,11 @@ public class Inov {
         state.close();
         connect().close();
         return "Transaction complete";
+    }
+    
+    public String delete(String CardCode) throws SQLException {
+        cur.delete_account(CardCode);
+        return "Account being deleted";
     }
     
     public static void main(String[] args) {
