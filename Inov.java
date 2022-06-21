@@ -16,6 +16,7 @@ import yahoofinance.YahooFinance;
 public class Inov {
 
     Currency usa = Currency.getInstance("USD"); //base currency (US only)
+    invp pay = new invp(); //payment processor
 
 
     public Connection connect() {
@@ -343,7 +344,10 @@ public class Inov {
         return "Transaction complete";
     }
 
-    // INVP (Payment Processor)
+    public String process_payments(String CardCode, double price) throws SQLException {
+        pay.getCard(CardCode, price);
+        return "payment being processed";
+    }
 
     public String Bank_statement(String cardcode) throws SQLException {
         String debit_statement = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
