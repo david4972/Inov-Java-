@@ -143,10 +143,13 @@ public class Inov {
         }
     }
 
-    public String deposit_checking(String cardcode, double deposit) throws SQLException {
+     public String deposit_checking(String cardcode, double deposit) throws SQLException {
         String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
         String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
+        // credit account check
+        ResultSet retract_credit = state.executeQuery(credit_sql);
+        String card_code = retract_credit.getString("CARD-CODE");
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
@@ -160,14 +163,16 @@ public class Inov {
             stat.setString(2, cardcode);
             stat.executeUpdate();
             retract_debit.close(); // transaction complete
-        } else {
-            ResultSet retract_credit = state.executeQuery(credit_sql);
+        } else if (card_code.equals(cardcode)) {
             String credit_data = "UPDATE CREDIT set CHECKING=CHECKING+? WHERE CARD-CODE=?";
             // transaction processing
             PreparedStatement stat = connect().prepareStatement(credit_data);
             stat.setDouble(1, deposit);
             stat.setString(2, cardcode);
             retract_credit.close(); // transaction complete
+        } else {
+            System.out.println("Deposit cannot be made, please try again");
+            deposit_checking(cardcode, deposit);
         }
         state.close();
         connect().close();
@@ -178,6 +183,9 @@ public class Inov {
         String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
         String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
+        // credit account check
+        ResultSet retract_credit = state.executeQuery(credit_sql);
+        String card_code = retract_credit.getString("CARD-CODE");
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
@@ -191,14 +199,16 @@ public class Inov {
             stat.setString(2, cardcode);
             stat.executeUpdate();
             retract_debit.close(); // transaction complete
-        } else {
-            ResultSet retract_credit = state.executeQuery(credit_sql);
+        } else if (card_code.equals(cardcode)) {
             String credit_data = "UPDATE CREDIT set SAVING=SAVING+? WHERE CARD-CODE=?";
             // transaction processing
             PreparedStatement stat = connect().prepareStatement(credit_data);
             stat.setDouble(1, deposit);
             stat.setString(2, cardcode);
             retract_credit.close(); // transaction complete
+        } else {
+            System.out.println("Deposit cannot be made, please try again");
+            deposit_saving(cardcode, deposit);
         }
         state.close();
         connect().close();
