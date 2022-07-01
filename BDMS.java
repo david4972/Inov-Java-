@@ -3,11 +3,11 @@ import java.sql.*;
 
 public class BDMS {
 
-    Inov go = new Inov();
+    inov go = new inov();
 
-    public Connection connect() {
+    public static Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inovbankdata.db";
+        String url = "jdbc:sqlite:inov.db";
         Connection conn = null;
         // Statement state = null;
         try {
@@ -52,54 +52,50 @@ public class BDMS {
     }
 
     //Debit Account systems
-    public String debit_accounts() throws SQLException {
-        String debit = "SELECT NAME, CARD-NUM, CARD-CODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBIT";
+    public static void debit_accounts() throws SQLException {
+        // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit);
-        String debit_account_info = null;
+        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov");
         while (retract_debit.next()) {
             String account_name = retract_debit.getString("NAME");
-            String card_num = retract_debit.getString("CARD-NUM");
-            String card_code = retract_debit.getString("CARD-CODE");
+            int card_num = retract_debit.getInt("CARDNUM");
+            String card_code = retract_debit.getString("CARDCODE");
             double checking_balance = retract_debit.getDouble("CHECKING");
             double saving_balance = retract_debit.getDouble("SAVING");
             String address = retract_debit.getString("ADDRESS");
             String currency = retract_debit.getString("CURRENCY");
-            debit_account_info = "Account Holder = " + account_name + "\n" +
-                                 "Card Numbers = " + card_num + "\n" +
-                                 "Card Codes = " + card_code + "\n" +
-                                 "Checking Balances = " + checking_balance + "\n" +
-                                 "Savings Balances = " + saving_balance + "\n" +
-                                 "Addresses = " + address + "\n" +
-                                 "Currency = " + currency;
-            retract_debit.close();
+            System.out.println("Account Holder = " + account_name);
+            System.out.println("Card Numbers =  " + card_num);
+            System.out.println("Card Codes = " + card_code);
+            System.out.println("Checking Balances = " + checking_balance);
+            System.out.println("Savings Balances = " + saving_balance);
+            System.out.println("Addresses = " + address);
+            System.out.println("Currency = " + currency);
         }
-        return debit_account_info;
     }
 
-    //Credit Account systems
-    public String credit_accounts() throws SQLException {
-        String debit = "SELECT NAME, CARD-NUM, CARD-CODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM CREDIT";
+    public static void credit_accounts() throws SQLException {
+        // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
-        ResultSet retract_credit = state.executeQuery(debit);
-        String credit_account_info = null;
+        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM CREDITInov");
         while (retract_credit.next()) {
             String account_name = retract_credit.getString("NAME");
-            String card_num = retract_credit.getString("CARD-NUM");
-            String card_code = retract_credit.getString("CARD-CODE");
+            int card_num = retract_credit.getInt("CARDNUM");
+            String card_code = retract_credit.getString("CARDCODE");
             double checking_balance = retract_credit.getDouble("CHECKING");
             double saving_balance = retract_credit.getDouble("SAVING");
             String address = retract_credit.getString("ADDRESS");
             String currency = retract_credit.getString("CURRENCY");
-            credit_account_info = "Account Holder = " + account_name + "\n" +
-                                  "Card Numbers = " + card_num + "\n" +
-                                  "Card Codes = " + card_code + "\n" +
-                                  "Checking Balances = " + checking_balance + "\n" +
-                                  "Savings Balances = " + saving_balance + "\n" +
-                                  "Addresses = " + address + "\n" +
-                                  "Currency = " + currency;
-            retract_credit.close();
+            System.out.println("Account Holder = " + account_name);
+            System.out.println("Card Numbers =  " + card_num);
+            System.out.println("Card Codes = " + card_code);
+            System.out.println("Checking Balances = " + checking_balance);
+            System.out.println("Savings Balances = " + saving_balance);
+            System.out.println("Addresses = " + address);
+            System.out.println("Currency = " + currency);
+            }
         }
-        return credit_account_info;
+        public static void main(String[] args) throws SQLException, ClassNotFoundException {
+            debit_accounts();
     }
 }
