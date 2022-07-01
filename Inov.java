@@ -8,6 +8,8 @@ import java.sql.*;
 import java.util.Currency;
 import java.util.Scanner;
 import yahoofinance.YahooFinance;
+import yahoofinance.quotes.fx.FxSymbols;
+
 import java.math.*;
 
 
@@ -567,32 +569,91 @@ public class inov {
         }
     }
 
-    public void Currency_exchange_Debit(int cardcode, String country) throws SQLException, IOException {
-        Currency currency_convert = Currency.getInstance(country);// base currency will be converted to this
-        String convert_to = currency_convert.getCurrencyCode();
-        String base = usa.getCurrencyCode();
-        String concat = base + convert_to;
-        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
-        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
+    public void Currency_exchange_Debit_EUR(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDEUR).getPrice();
         Statement state = connect().createStatement();
+        String currency = "EUR";
         // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, num);
-        stat.setBigDecimal(2, num);
-        stat.setInt(3, cardcode);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Debit_GBP(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDGBP).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "GBP";
+        // find account for requested transaction (credit check)
+        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_debit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Debit_AUS(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDAUD).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "AUD";
+        // find account for requested transaction (credit check)
+        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_debit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Debit_JPY(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDJPY).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "JPY";
+        // find account for requested transaction (credit check)
+        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_debit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Debit_HKD(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDHKD).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "HKD";
+        // find account for requested transaction (credit check)
+        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_debit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
         stat.executeUpdate();
         state.close();
         System.out.println("Currency Converted on account");
     }
 
     public void Currency_exchange_Debit_International(int cardcode, String base_country, String Converto_country) throws SQLException, IOException {
-        Currency currency_base = Currency.getInstance(base_country);// base currency will be converted to this
-        String convert_base = currency_base.getCurrencyCode();
-        Currency convert_into = Currency.getInstance(Converto_country);
-        String convertion = convert_into.getCurrencyCode();
-        String concat = convert_base + convertion;
+        // base currency will be converted to this
+        String base = String.valueOf(Currency.getInstance(base_country));
+        String conv  = String.valueOf(Currency.getInstance(Converto_country));
+        String concat =  base.concat(conv);
         BigDecimal convert = YahooFinance.getFx(concat).getPrice();
         BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
         //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
@@ -608,21 +669,81 @@ public class inov {
         System.out.println("Currency Converted on account");
     }
 
-    public void Currency_exchange_Credit(int cardcode, String country) throws SQLException, IOException {
-        Currency currency_convert = Currency.getInstance(country);// base currency will be converted to this
-        String convert_to = currency_convert.getCurrencyCode();
-        String base = usa.getCurrencyCode();
-        String concat = base + convert_to;
-        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
-        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
+    public void Currency_exchange_Credit_EUR(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDEUR).getPrice();
         Statement state = connect().createStatement();
+        String currency = "EUR";
         // find account for requested transaction (credit check)
         String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setBigDecimal(1, num);
-        stat.setBigDecimal(2, num);
-        stat.setInt(3, cardcode);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Credit_GBP(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDGBP).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "GBP";
+        // find account for requested transaction (credit check)
+        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_credit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Credit_AUS(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDAUD).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "AUD";
+        // find account for requested transaction (credit check)
+        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_credit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Credit_JPY(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDJPY).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "JPY";
+        // find account for requested transaction (credit check)
+        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_credit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Credit_HongKong(int cardcode) throws SQLException, IOException {
+        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDHKD).getPrice();
+        Statement state = connect().createStatement();
+        String currency = "HKD";
+        // find account for requested transaction (credit check)
+        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_credit);
+        stat.setBigDecimal(1, convert);
+        stat.setBigDecimal(2, convert);
+        stat.setString(3, currency);
+        stat.setInt(4, cardcode);
         stat.executeUpdate();
         state.close();
         System.out.println("Currency Converted on account");
