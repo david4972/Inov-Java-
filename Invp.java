@@ -15,68 +15,78 @@ public class invp {
         return conn;
     }
 
-    public String getCard(String CardCode, double price) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+    // Debit
+    public void getCard_Debit(String CardCode, double price) throws SQLException {
+        //String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
+        //String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         // find account for requested bank statement (credit check)
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
-        // find account for requested bank statement (debit check)
-        ResultSet retract_debit = state.executeQuery(debit_sql);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(CardCode)) {
-             String name = retract_debit.getString("NAME");
-             retract_debit.close();
-             state.close();
-             connect().close();
-             chargeCard(name, CardCode, price);
-
-        } else if (card_code.equals(CardCode)) {
-            String name = retract_credit.getString("NAME");
-            chargeCard(name, CardCode, price);
-            retract_credit.close();
-            state.close();
-            connect().close();
-        } else {
-            System.out.println("card cannot be processed, feel free to try again");
-            getCard(CardCode, price);
-        }
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM DEBITInov WHERE CARD-CODE=?");
+        String email = retract_debit.getString("EMAIL");
+        String name = retract_debit.getString("NAME");
+        retract_debit.close();
         state.close();
-        connect().close();
-        return "card being processed";
+        chargeCard_Debit(name, CardCode, price);
     }
 
-    public String chargeCard(String name, String CardCode, double price) throws SQLException {
+
+    public void chargeCard_Debit(String name, String CardCode, double price) throws SQLException {
         String Vendor = "INVP";
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?, WHERE NAME=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?, WHERE NAME=?";
+
+        Statement state = connect().createStatement();;
+        // find account for requested bank statement (debit check)
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM DEBITInov WHERE CARDCODE=?, WHERE NAME=?");
+        String charge = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDCODE=?";
+        PreparedStatement stat = connect().prepareStatement(charge);
+        stat.setDouble(1, price);
+        stat.setString(2, CardCode);
+        retract_debit.close();
+        String Payment_info = "Account name = " + name + "\n" +
+                "Vendor = " + Vendor + "\n" +
+                "Amount = " + price + "\n";
+        process_payment_Debit(Payment_info);
+    }
+
+    public void process_payment_Debit(String message){
+        System.out.print(message);
+    }
+
+
+    // Credit
+    public void getCard_Credit(String CardCode, double price) throws SQLException {
+        //String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
+        //String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         // find account for requested bank statement (credit check)
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM CREDITInov WHERE CARD-CODE=?");
+        String email = retract_debit.getString("EMAIL");
+        String name = retract_debit.getString("NAME");
+        retract_debit.close();
+        state.close();
+        chargeCard_Credit(name, CardCode, price);
+    }
+
+
+    public void chargeCard_Credit(String name, String CardCode, double price) throws SQLException {
+        String Vendor = "INVP";
+
+        Statement state = connect().createStatement();;
         // find account for requested bank statement (debit check)
-        ResultSet retract_debit = state.executeQuery(debit_sql);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(CardCode)) {
-            String charge = "UPDATE DEBIT set CHECKING=CHECKING-? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(charge);
-            stat.setDouble(1, price);
-            stat.setString(2, CardCode);
-            retract_debit.close();
-        } else if (card_code.equals(CardCode)) {
-            String charge = "UPDATE CREDIT set CHECKING=CHECKING-? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(charge);
-            stat.setDouble(1, price);
-            stat.setString(2, CardCode);
-            retract_credit.close();
-        } else {
-            System.out.println("payment cannot be processed, feel free to try again");
-            chargeCard(name, CardCode, price);
-        }
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM CREDITInov WHERE CARDCODE=?, WHERE NAME=?");
+        String charge = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDCODE=?";
+        PreparedStatement stat = connect().prepareStatement(charge);
+        stat.setDouble(1, price);
+        stat.setString(2, CardCode);
+        retract_debit.close();
         String Payment_info = "Account name = " + name + "\n" +
-                              "Vendor = " + Vendor + "\n" +
-                              "Amount = " + price + "\n";
-        return "payment processed";
+                "Vendor = " + Vendor + "\n" +
+                "Amount = " + price + "\n";
+        process_payment_Credit(Payment_info);
+    }
+
+    public void process_payment_Credit(String message){
+        System.out.print(message);
     }
 }
+
+
