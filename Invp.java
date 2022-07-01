@@ -4,7 +4,7 @@ public class invp {
 
     public Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inovbankdata.db";
+        String url = "jdbc:sqlite:inov.db";
         Connection conn = null;
         // Statement state = null;
         try {
