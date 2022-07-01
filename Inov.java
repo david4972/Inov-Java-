@@ -8,21 +8,20 @@ import java.sql.*;
 import java.util.Currency;
 import java.util.Scanner;
 import yahoofinance.YahooFinance;
-
-//import static java.math.BigDecimal.ONE;
-//import yahoofinance.exchanges.*;
+import java.math.*;
 
 
-public class Inov {
 
+
+public class inov {
     Currency usa = Currency.getInstance("USD"); //base currency (US only)
-    invp pay = new invp(); //payment processor
-    BDMS cur = new BDMS();// database system
 
+    invp pay = new invp();
 
+    //BDMS cur = new BDMS();
     public Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inovbankdata.db";
+        String url = "jdbc:sqlite:inov.db";
         Connection conn = null;
         // Statement state = null;
         try {
@@ -38,23 +37,28 @@ public class Inov {
                 "We only operate in the US as of right now but we look to expand.");
     }
 
-    public String create_debit_account(String name, String email, String address) throws NoSuchAlgorithmException {
+    public void create_debit_account(String name, String email, String address) throws NoSuchAlgorithmException {
         //Country
-        String base_currency = usa.getCurrencyCode();
+        Currency usa = Currency.getInstance("USD");
+        String curr_code = usa.getCurrencyCode();
         // Read input scan
         Scanner scan = new Scanner(System.in);
         //Creating a KeyGenerator object Cryptography key
         KeyGenerator keyGen = KeyGenerator.getInstance("DES");
-        //Creating a SecureRandom object (credit & debit card numbers)
-        SecureRandom rand_num = new SecureRandom();
+
+        //Creating a SecureRandom object
+        SecureRandom secRandom = new SecureRandom();
+
         //Initializing the KeyGenerator
-        keyGen.init(rand_num);
+        keyGen.init(secRandom);
+
         //Creating/Generating a key
         Key key = keyGen.generateKey();
+        String secure_code = key.toString();
+        String get_code = secure_code.substring(28);
+        // System.out.println(get_code);
         //create account details
-        int card_num = rand_num.nextInt(10000);
-        String secure_code = String.valueOf(key);
-        String card_code = secure_code.substring(0, 5);
+        int card_num = secRandom.nextInt(11111);
         System.out.println("Enter Amount you want to Deposit into Checking account (minimum deposit $25 ):  ");
         double checking = scan.nextDouble();
         System.out.println("Enter Amount you want to Deposit into Saving account (minimum deposit $25):  ");
@@ -64,472 +68,647 @@ public class Inov {
             create_debit_account(name, email, address);
         } else {
             //Insert inputs into database Table (creating account)
-            String read_data = "INSERT INTO DEBIT(NAME, EMAIL, CARD-NUM, CARD-CODE, SECURITY, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
-                    "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String read_data = "INSERT INTO DEBITInov(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
+                    "(?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = this.connect();
                  PreparedStatement pstmt = conn.prepareStatement(read_data)) {
                 pstmt.setString(1, name);
                 pstmt.setString(2, email);
                 pstmt.setInt(3, card_num);
-                pstmt.setString(4, card_code);
-                pstmt.setString(5, secure_code);
-                pstmt.setDouble(6, checking);
-                pstmt.setDouble(7, saving);
-                pstmt.setString(8, address);
-                pstmt.setString(9, base_currency);
-                pstmt.executeUpdate(read_data);
-                pstmt.close();
-                conn.commit();
+                pstmt.setString(4, get_code);
+                pstmt.setDouble(5, checking);
+                pstmt.setDouble(6, saving);
+                pstmt.setString(7, address);
+                pstmt.setString(8, curr_code);
+                pstmt.executeUpdate();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
-        return "Debit account created, Welcome to Inov";
+        // mail notification
+        System.out.println("Debit Account created");
+
     }
 
-    public String create_credit_account(String name, String email, String address) throws NoSuchAlgorithmException {
+    public void create_International_debit_account(String name, String email, String address, String Country) throws NoSuchAlgorithmException {
         //Country
-        String base_currency = usa.getCurrencyCode();
+        Currency cou = Currency.getInstance(Country);
+        String curr_code = cou.getCurrencyCode();
         // Read input scan
         Scanner scan = new Scanner(System.in);
         //Creating a KeyGenerator object Cryptography key
         KeyGenerator keyGen = KeyGenerator.getInstance("DES");
-        //Creating a SecureRandom object (credit & debit card numbers)
-        SecureRandom rand_num = new SecureRandom();
+
+        //Creating a SecureRandom object
+        SecureRandom secRandom = new SecureRandom();
+
         //Initializing the KeyGenerator
-        keyGen.init(rand_num);
+        keyGen.init(secRandom);
+
         //Creating/Generating a key
         Key key = keyGen.generateKey();
+        String secure_code = key.toString();
+        String get_code = secure_code.substring(28);
+        // System.out.println(get_code);
         //create account details
-        int card_num = rand_num.nextInt(10000);
-        String secure_code = String.valueOf(key);
-        String card_code = secure_code.substring(0, 5);
+        int card_num = secRandom.nextInt(11111);
         System.out.println("Enter Amount you want to Deposit into Checking account (minimum deposit $25 ):  ");
         double checking = scan.nextDouble();
         System.out.println("Enter Amount you want to Deposit into Saving account (minimum deposit $25):  ");
         double saving = scan.nextDouble();
         if (checking < 25.00 && saving < 25.00) {
             System.out.println("deposits are less than required amount");
-            create_credit_account(name, email, address);
+            create_debit_account(name, email, address);
         } else {
             //Insert inputs into database Table (creating account)
-            String read_data = "INSERT INTO CREDIT(NAME, EMAIL, CARD-NUM, CARD-CODE, SECURITY, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
-                    "(?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            String read_data = "INSERT INTO InterDEBITInov(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
+                    "(?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = this.connect();
                  PreparedStatement pstmt = conn.prepareStatement(read_data)) {
                 pstmt.setString(1, name);
                 pstmt.setString(2, email);
                 pstmt.setInt(3, card_num);
-                pstmt.setString(4, card_code);
-                pstmt.setString(5, secure_code);
-                pstmt.setDouble(6, checking);
-                pstmt.setDouble(7, saving);
-                pstmt.setString(8, address);
-                pstmt.setString(9, base_currency);
+                pstmt.setString(4, get_code);
+                pstmt.setDouble(5, checking);
+                pstmt.setDouble(6, saving);
+                pstmt.setString(7, address);
+                pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
-        return "Credit account created, Welcome to Inov";
+        // mail notification
+        System.out.println("International Debit Account created");
+
     }
 
-    public void deposit_option(String choice, String cardcode, double deposit) throws SQLException {
-        if (choice.equals("1")) {
-            deposit_checking(cardcode, deposit);
+    public void create_credit_account(String name, String email, String address) throws NoSuchAlgorithmException {
+        //Country
+        Currency usa = Currency.getInstance("USD");
+        String curr_code = usa.getCurrencyCode();
+        // Read input scan
+        Scanner scan = new Scanner(System.in);
+        //Creating a KeyGenerator object Cryptography key
+        KeyGenerator keyGen = KeyGenerator.getInstance("DES");
+
+        //Creating a SecureRandom object
+        SecureRandom secRandom = new SecureRandom();
+
+        //Initializing the KeyGenerator
+        keyGen.init(secRandom);
+
+        //Creating/Generating a key
+        Key key = keyGen.generateKey();
+        String secure_code = key.toString();
+        String get_code = secure_code.substring(28);
+        // System.out.println(get_code);
+        //create account details
+        int card_num = secRandom.nextInt(11111);
+        System.out.println("Enter Amount you want to Deposit into Checking account (minimum deposit $25 ):  ");
+        double checking = scan.nextDouble();
+        System.out.println("Enter Amount you want to Deposit into Saving account (minimum deposit $25):  ");
+        double saving = scan.nextDouble();
+        if (checking < 25.00 && saving < 25.00) {
+            System.out.println("deposits are less than required amount");
+            create_debit_account(name, email, address);
         } else {
-            deposit_saving(cardcode, deposit);
+            //Insert inputs into database Table (creating account)
+            String read_data = "INSERT INTO CREDITInov(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
+                    "(?, ?, ?, ?, ?, ?, ?, ?)";
+
+            try (Connection conn = this.connect();
+                 PreparedStatement pstmt = conn.prepareStatement(read_data)) {
+                pstmt.setString(1, name);
+                pstmt.setString(2, email);
+                pstmt.setInt(3, card_num);
+                pstmt.setString(4, get_code);
+                pstmt.setDouble(5, checking);
+                pstmt.setDouble(6, saving);
+                pstmt.setString(7, address);
+                pstmt.setString(8, curr_code);
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         }
+        // mail notification
+        System.out.println("Credit Account created");
+
     }
 
-     public String deposit_checking(String cardcode, double deposit) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+    public void deposit_checking_debit(int cardno, double deposit) throws SQLException {
+        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+
         Statement state = connect().createStatement();
-        // credit account check
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
         // String email = retract_debit.getString("EMAIL");
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            // transaction processing
-            String debit_data = "UPDATE DEBIT set CHECKING=CHECKING+? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(debit_data);
-            stat.setDouble(1, deposit);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_debit.close(); // transaction complete
-        } else if (card_code.equals(cardcode)) {
-            String credit_data = "UPDATE CREDIT set CHECKING=CHECKING+? WHERE CARD-CODE=?";
-            // transaction processing
-            PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, deposit);
-            stat.setString(2, cardcode);
-            retract_credit.close(); // transaction complete
-        } else {
-            System.out.println("Deposit cannot be made, please try again");
-            deposit_checking(cardcode, deposit);
-        }
-        state.close();
-        connect().close();
-        return "Deposit successful";
+        // transaction processing
+        String debit_data = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, deposit);
+        stat.setInt(2, cardno);
+        stat.executeUpdate();// transaction complete
+        System.out.println("Deposit successful");
     }
 
-    public String deposit_saving(String cardcode, double deposit) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+
+    public void deposit_saving_debit(int cardno, double deposit) throws SQLException {
+        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+
         Statement state = connect().createStatement();
-        // credit account check
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
-        // Debit account check
-        ResultSet retract_debit = state.executeQuery(debit_sql);
-        // String name = retract_debit.getString("NAME");
-        //String email = retract_debit.getString("EMAIL");
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            // transaction processing
-            String debit_data = "UPDATE DEBIT set SAVING=SAVING+? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(debit_data);
-            stat.setDouble(1, deposit);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_debit.close(); // transaction complete
-        } else if (card_code.equals(cardcode)) {
-            String credit_data = "UPDATE CREDIT set SAVING=SAVING+? WHERE CARD-CODE=?";
-            // transaction processing
-            PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, deposit);
-            stat.setString(2, cardcode);
-            retract_credit.close(); // transaction complete
-        } else {
-            System.out.println("Deposit cannot be made, please try again");
-            deposit_saving(cardcode, deposit);
-        }
-        state.close();
-        connect().close();
-        return "Deposit successful";
-    }
-
-    public void atm_option(String choice, String cardcode, double withdraw) throws SQLException {
-        if (choice.equals("1")) {
-            withdraw_checking(cardcode, withdraw);
-        } else {
-            withdraw_saving(cardcode, withdraw);
-        }
-    }
-
-    public String withdraw_checking(String cardcode, double withdraw) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        // credit account check
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
         // String email = retract_debit.getString("EMAIL");
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            // transaction processing
-            String debit_data = "UPDATE DEBIT set CHECKING=CHECKING-? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(debit_data);
-            stat.setDouble(1, withdraw);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_debit.close();
-        } else if (card_code.equals(cardcode)){
-            String credit_data = "UPDATE CREDIT set CHECKING=CHECKING-? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, withdraw);
-            stat.setString(2, cardcode);
-            retract_credit.close();
-        } else {
-            System.out.println("withdrawal cannot be processed, feel free to try again");
-            withdraw_checking(cardcode, withdraw);
-        }
+        // transaction processing
+        String debit_data = "UPDATE DEBITInov set SAVING=SAVING+? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, deposit);
+        stat.setInt(2, cardno);
+        stat.executeUpdate();
+        retract_debit.close(); // transaction complete
         state.close();
         connect().close();
-        return "withdrawal successful";
+        System.out.println("Deposit successful");
     }
 
-    public String withdraw_saving(String cardcode, double withdraw) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+    public void deposit_checking_credit(int cardno, double deposit) throws SQLException {
+        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+
         Statement state = connect().createStatement();
-        // credit account check
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
+        // Debit account check
+        ResultSet retract_credit = state.executeQuery(debit_sql);
+        // String name = retract_debit.getString("NAME");
+        // String email = retract_debit.getString("EMAIL");
+        // transaction processing
+        String credit_data = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(credit_data);
+        stat.setDouble(1, deposit);
+        stat.setInt(2, cardno);
+        stat.executeUpdate();
+        retract_credit.close(); // transaction complete
+        state.close();
+        connect().close();
+        System.out.println("Deposit successful");
+    }
+
+    public void deposit_saving_credit(int cardno, double deposit) throws SQLException {
+        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+
+        Statement state = connect().createStatement();
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
         // String email = retract_debit.getString("EMAIL");
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            // transaction processing
-            String debit_data = "UPDATE DEBIT set SAVING=SAVING-? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(debit_data);
-            stat.setDouble(1, withdraw);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_debit.close();
-        } else if (card_code.equals(cardcode)) {
-            String credit_data = "UPDATE CREDIT set SAVING=SAVING-? WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, withdraw);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_credit.close();
-        } else {
-            System.out.println("withdrawal cannot be processed, feel free to try again");
-            withdraw_saving(cardcode, withdraw);
-        }
+        // transaction processing
+        String debit_data = "UPDATE CREDITInov set SAVING=SAVING+? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, deposit);
+        stat.setInt(2, cardno);
+        stat.executeUpdate();
+        retract_debit.close(); // transaction complete
         state.close();
         connect().close();
-        return "withdrawal successful";
+        System.out.println("Deposit successful");
     }
 
-    public String send_money(String cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+
+    public void withdraw_checking_Debit(int cardnum, double withdraw) throws SQLException {
+        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
         Statement state = connect().createStatement();
-        // collect valued amount to be sent to recipient (credit check)
-        ResultSet retract_credit = state.executeQuery(credit_transfer);
-        String card_code = retract_credit.getString("CARD-CODE");
+        // Debit account check
+        ResultSet retract_debit = state.executeQuery(debit_sql);
+        String debit_data = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, withdraw);
+        stat.setInt(2, cardnum);
+        stat.executeUpdate();
+        retract_debit.close(); // transaction complete
+        state.close();
+        connect().close();
+        System.out.println("Withdrawal successful");
+    }
+
+    public void withdraw_saving_Debit(int cardnum, double withdraw) throws SQLException {
+        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        ResultSet retract_debit = state.executeQuery(debit_sql);
+        String debit_data = "UPDATE DEBITInov set SAVING=SAVING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, withdraw);
+        stat.setInt(2, cardnum);
+        stat.executeUpdate();
+        retract_debit.close(); // transaction complete
+        state.close();
+        connect().close();
+        System.out.println("Withdrawal successful");
+    }
+
+    public void withdraw_checking_Credit(int cardnum, double withdraw) throws SQLException {
+        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        ResultSet retract_debit = state.executeQuery(debit_sql);
+        String debit_data = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, withdraw);
+        stat.setInt(2, cardnum);
+        stat.executeUpdate();
+        retract_debit.close(); // transaction complete
+        state.close();
+        connect().close();
+        System.out.println("Withdrawal successful");
+    }
+
+    public void withdraw_saving_Credit(int cardnum, double withdraw) throws SQLException {
+        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        ResultSet retract_debit = state.executeQuery(debit_sql);
+        String debit_data = "UPDATE CREDITInov set SAVING=SAVING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_data);
+        stat.setDouble(1, withdraw);
+        stat.setInt(2, cardnum);
+        stat.executeUpdate();
+        retract_debit.close(); // transaction complete
+        state.close();
+        connect().close();
+        System.out.println("Withdrawal successful");
+    }
+
+    // Debit
+    public void send_money_debit(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        Statement state = connect().createStatement();
         // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            String retrieve = "UPDATE DEBIT set CHECKING=CHECKING-? WHERE CARD-CODE=?";
+        if (retract_debit.next()) {
+            String retrieve = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
-            stat.setString(2, cardcode);
+            stat.setInt(2, cardcode);
+            String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(accept);
+            stat2.setDouble(1, amount);
+            stat2.setString(2, recipient);
             stat.executeUpdate();
+            stat2.executeUpdate();
+            System.out.println("Transfer processed");
             retract_debit.close();
-        } else if (card_code.equals(cardcode)) {
-            String retrieve = "UPDATE CREDIT set CHECKING=CHECKING-? WHERE CARD-CODE=?";
+        } else {
+            send_to_credit(cardcode, amount, recipient);
+        }
+    }
+
+    public void send_to_credit(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        Statement state = connect().createStatement();
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String retrieve = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retrieve);
+        stat.setDouble(1, amount);
+        stat.setInt(2, cardcode);
+        String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(accept);
+        stat2.setDouble(1, amount);
+        stat2.setString(2, recipient);
+        stat.executeUpdate();
+        stat2.executeUpdate();
+        retract_debit.close();
+        System.out.println("Transfer processed");
+    }
+
+    // Credit
+    public void send_money_credit(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        Statement state = connect().createStatement();
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_credit = state.executeQuery(debit_transfer);
+        // int card_code = retract_debit.getInt("CARDNUM");
+        if (retract_credit.next()) {
+            String retrieve = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
-            stat.setString(2, cardcode);
+            stat.setInt(2, cardcode);
+            String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(accept);
+            stat2.setDouble(1, amount);
+            stat2.setString(2, recipient);
             stat.executeUpdate();
+            stat2.executeUpdate();
+            System.out.println("Transfer processed");
             retract_credit.close();
         } else {
-            System.out.println("Account cannot be found, feel free to try again");
-            send_money(cardcode, amount, recipient);
+            send_to_debit(cardcode, amount, recipient);
         }
-        // process transaction
-        String debit_send = "SELECT * FROM DEBIT WHERE NAME=?";
-        String credit_send = "SELECT * FROM CREDIT WHERE NAME=?";
-        // collect valued amount to be sent to recipient (credit check)
-        ResultSet send_credit = state.executeQuery(credit_send);
-        String recipient_name_credit = retract_credit.getString("NAME");
-        // collect valued amount to be sent to recipient (debit check)
-        ResultSet send_debit = state.executeQuery(debit_send);
-        String recipient_name_debit = retract_credit.getString("NAME");
-        if (recipient_name_debit.equals(recipient)) {
-            String send = "UPDATE DEBIT set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setDouble(1, amount);
-            stat.setString(2, recipient);
-            stat.executeUpdate();
-            send_debit.close();
-        } else if (recipient_name_credit.equals(recipient)) {
-            String send = "UPDATE CREDIT set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setDouble(1, amount);
-            stat.setString(2, recipient);
-            stat.executeUpdate();
-            send_credit.close();
-        } else {
-            System.out.println("Transfer cannot be processed, feel free to try again");
-            send_money(cardcode, amount, recipient);
-        }
-        state.close();
-        connect().close();
-        return "Transaction complete";
+
     }
 
-    public String process_payments(String CardCode, double price) throws SQLException {
-        pay.getCard(CardCode, price);
-        return "payment being processed";
-    }
-
-    public String Bank_statement(String cardcode) throws SQLException {
-        String debit_statement = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_statement = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+    public void send_to_debit(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        // find account for requested bank statement (credit check)
-        ResultSet retract_credit = state.executeQuery(credit_statement);
-        String card_code = retract_credit.getString("CARD-CODE");
-        // find account for requested bank statement (debit check)
-        ResultSet retract_debit = state.executeQuery(debit_statement);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            while (retract_debit.next()) {
-                String account_name = retract_debit.getString("NAME");
-                double checking_balance = retract_debit.getDouble("CHECKING");
-                double saving_balance = retract_debit.getDouble("SAVING");
-                String currency = retract_debit.getString("CURRENCY");
-                String title_debit = "Bank Statement";
-                String bank_statement_debit = "Account Holder = " + account_name + "\n" +
-                                              "Checking Balance = " + checking_balance + "\n" +
-                                              "Savings Balance = " + saving_balance + "\n" +
-                                              "Currency = " + currency;
-                // Files.File_creator(title_debit, bank_statement_debit)
-                retract_debit.close();
-
-            }
-        } else if (card_code.equals(cardcode)) {
-            while (retract_credit.next()) {
-                String account_name = retract_debit.getString("NAME");
-                double checking_balance = retract_debit.getDouble("CHECKING");
-                double saving_balance = retract_debit.getDouble("SAVING");
-                String currency = retract_debit.getString("CURRENCY");
-                String title_credit = "Bank Statement";
-                String bank_statement_credit = "Account Holder = " + account_name + "\n" +
-                        "Checking Balance = " + checking_balance + "\n" +
-                        "Savings Balance = " + saving_balance + "\n" +
-                        "Currency = " + currency;
-                // Files.File_creator(title_credit, bank_statement_credit)
-                retract_credit.close();
-
-            }
-
-        } else {
-            System.out.println("Bank statement cannot be processed, please try again");
-            Bank_statement(cardcode);
-        }
-        state.close();
-        connect().close();
-        return "Bank Statement has been processed, please check email";
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String retrieve = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retrieve);
+        stat.setDouble(1, amount);
+        stat.setInt(2, cardcode);
+        String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(accept);
+        stat2.setDouble(1, amount);
+        stat2.setString(2, recipient);
+        stat.executeUpdate();
+        stat2.executeUpdate();
+        retract_debit.close();
+        System.out.println("Transfer processed");
     }
-    public String Currency_exchange(String cardcode, String country) throws SQLException, IOException {
+
+    public void send_money_debit_international(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        Statement state = connect().createStatement();
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_debit = state.executeQuery(debit_transfer);
+        int card_code = retract_debit.getInt("CARDNUM");
+        if (card_code == cardcode) {
+            String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+            PreparedStatement stat = connect().prepareStatement(retrieve);
+            stat.setDouble(1, amount);
+            stat.setInt(2, cardcode);
+            String accept = "UPDATE InterDEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(accept);
+            stat2.setDouble(1, amount);
+            stat2.setString(2, recipient);
+            stat.executeUpdate();
+            stat2.executeUpdate();
+            System.out.println("Transfer processed");
+            retract_debit.close();
+        } else {
+            send_to_debit_international(cardcode, amount, recipient);
+        }
+    }
+
+    public void send_to_debit_international(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        Statement state = connect().createStatement();
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_debit = state.executeQuery(debit_transfer);
+        int card_code = retract_debit.getInt("CARDNUM");
+        if (card_code == cardcode) {
+            String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+            PreparedStatement stat = connect().prepareStatement(retrieve);
+            stat.setDouble(1, amount);
+            stat.setInt(2, cardcode);
+            String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(accept);
+            stat2.setDouble(1, amount);
+            stat2.setString(2, recipient);
+            stat.executeUpdate();
+            stat2.executeUpdate();
+            System.out.println("Transfer processed");
+            retract_debit.close();
+        } else {
+            send_to_credit_international(cardcode, amount, recipient);
+        }
+    }
+
+    public void send_to_credit_international(int cardcode, double amount, String recipient) throws SQLException {
+        String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        Statement state = connect().createStatement();
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retrieve);
+        stat.setDouble(1, amount);
+        stat.setInt(2, cardcode);
+        String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(accept);
+        stat2.setDouble(1, amount);
+        stat2.setString(2, recipient);
+        stat.executeUpdate();
+        stat2.executeUpdate();
+        retract_debit.close();
+        System.out.println("Transfer processed");
+    }
+
+
+
+
+
+    public void debit_bank_statement(int cardcode) throws SQLException {
+        // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
+        Statement state = connect().createStatement();
+        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov WHERE CARDNUM=?");
+        while (retract_debit.next()) {
+            String account_name = retract_debit.getString("NAME");
+            int card_num = retract_debit.getInt("CARDNUM");
+            String card_code = retract_debit.getString("CARDCODE");
+            double checking_balance = retract_debit.getDouble("CHECKING");
+            double saving_balance = retract_debit.getDouble("SAVING");
+            String address = retract_debit.getString("ADDRESS");
+            String currency = retract_debit.getString("CURRENCY");
+            System.out.println("Account Holder = " + account_name);
+            System.out.println("Card Numbers =  " + card_num);
+            System.out.println("Card Codes = " + card_code);
+            System.out.println("Checking Balances = " + checking_balance);
+            System.out.println("Savings Balances = " + saving_balance);
+            System.out.println("Addresses = " + address);
+            System.out.println("Currency = " + currency);
+        }
+    }
+
+    public void credit_bank_statement(int cardcode) throws SQLException {
+        // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
+        Statement state = connect().createStatement();
+        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM CREDITInov WHERE CARDNUM=?");
+        while (retract_credit.next()) {
+            String account_name = retract_credit.getString("NAME");
+            int card_num = retract_credit.getInt("CARDNUM");
+            String card_code = retract_credit.getString("CARDCODE");
+            double checking_balance = retract_credit.getDouble("CHECKING");
+            double saving_balance = retract_credit.getDouble("SAVING");
+            String address = retract_credit.getString("ADDRESS");
+            String currency = retract_credit.getString("CURRENCY");
+            System.out.println("Account Holder = " + account_name);
+            System.out.println("Card Numbers =  " + card_num);
+            System.out.println("Card Codes = " + card_code);
+            System.out.println("Checking Balances = " + checking_balance);
+            System.out.println("Savings Balances = " + saving_balance);
+            System.out.println("Addresses = " + address);
+            System.out.println("Currency = " + currency);
+        }
+    }
+
+    public void payment_processor(String Cardcode) throws SQLException {
+        Scanner scan3 = new Scanner(System.in);
+        double price = 20;
+        System.out.println("Please select ?");
+        System.out.println("1. Debit ");
+        System.out.println("2. Credit ");
+        String accnt_line = scan3.nextLine();
+        if (accnt_line.equals("1")) {
+            pay.getCard_Debit(Cardcode, price);
+        }
+        if (accnt_line.equals("2")) {
+            pay.getCard_Credit(Cardcode, price);
+        }
+    }
+
+    public void Currency_exchange_Debit(int cardcode, String country) throws SQLException, IOException {
         Currency currency_convert = Currency.getInstance(country);// base currency will be converted to this
         String convert_to = currency_convert.getCurrencyCode();
         String base = usa.getCurrencyCode();
         String concat = base + convert_to;
         BigDecimal convert = YahooFinance.getFx(concat).getPrice();
         BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        String debit_statement = "SELECT *  FROM DEBIT WHERE CARD-CODE=?";
-        String credit_statement = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
         Statement state = connect().createStatement();
         // find account for requested transaction (credit check)
-        ResultSet retract_credit = state.executeQuery(credit_statement);
-        String card_code = retract_credit.getString("CARD-CODE");
-        // find account for requested transaction (debit check)
-        ResultSet retract_debit = state.executeQuery(debit_statement);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            String send = "UPDATE DEBIT set CHECKING=CHECKING/?, CURRENCY=?  WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setBigDecimal(1, num);
-            stat.setString(2, convert_to);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_debit.close();
-        } else if (card_code.equals(cardcode)) {
-            String send = "UPDATE CREDIT set CHECKING=CHECKING/?, CURRENCY=? WHERE NAME=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setBigDecimal(1, num);
-            stat.setString(2, convert_to);
-            stat.setString(3, cardcode);
-            stat.executeUpdate();
-            retract_credit.close();
-        } else {
-            System.out.println("Request cannot be processed, feel free to try again");
-            Currency_exchange(cardcode, country);
-        }
+        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_debit);
+        stat.setBigDecimal(1, num);
+        stat.setBigDecimal(2, num);
+        stat.setInt(3, cardcode);
+        stat.executeUpdate();
         state.close();
-        connect().close();
-
-
-        return "Conversion complete";
+        System.out.println("Currency Converted on account");
     }
 
-    public String International_transactions(String cardcode, String country, BigDecimal amount, String name) throws SQLException, IOException {
+    public void Currency_exchange_Debit_International(int cardcode, String base_country, String Converto_country) throws SQLException, IOException {
+        Currency currency_base = Currency.getInstance(base_country);// base currency will be converted to this
+        String convert_base = currency_base.getCurrencyCode();
+        Currency convert_into = Currency.getInstance(Converto_country);
+        String convertion = convert_into.getCurrencyCode();
+        String concat = convert_base + convertion;
+        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
+        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
+        //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // find account for requested transaction (credit check)
+        String retract_debit = "UPDATE  InterDEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_debit);
+        stat.setBigDecimal(1, num);
+        stat.setBigDecimal(2, num);
+        stat.setInt(3, cardcode);
+        stat.executeUpdate();
+        state.close();
+        System.out.println("Currency Converted on account");
+    }
+
+    public void Currency_exchange_Credit(int cardcode, String country) throws SQLException, IOException {
         Currency currency_convert = Currency.getInstance(country);// base currency will be converted to this
         String convert_to = currency_convert.getCurrencyCode();
         String base = usa.getCurrencyCode();
         String concat = base + convert_to;
         BigDecimal convert = YahooFinance.getFx(concat).getPrice();
         BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        BigDecimal exchange = amount.divide(num);
-        String debit_statement = "SELECT *  FROM DEBIT WHERE CARD-CODE=?";
-        String credit_statement = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
         Statement state = connect().createStatement();
         // find account for requested transaction (credit check)
-        ResultSet retract_credit = state.executeQuery(credit_statement);
-        String card_code = retract_credit.getString("CARD-CODE");
-        // find account for requested transaction (debit check)
-        ResultSet retract_debit = state.executeQuery(debit_statement);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(cardcode)) {
-            String send = "UPDATE DEBIT set CHECKING=CHECKING-?, CURRENCY=?  WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setBigDecimal(1, exchange);
-            stat.setString(2, convert_to);
-            stat.setString(2, cardcode);
-            stat.executeUpdate();
-            retract_debit.close();
-        } else if (card_code.equals(cardcode)) {
-            String send = "UPDATE CREDIT set CHECKING=CHECKING-?, CURRENCY=? WHERE NAME=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setBigDecimal(1, exchange);
-            stat.setString(2, convert_to);
-            stat.setString(3, cardcode);
-            stat.executeUpdate();
-            retract_credit.close();
-        } else {
-            System.out.println("Account cannot be found, feel free to try again");
-            International_transactions(cardcode, country, amount, name);
-        }
-
-        // Process Transaction
-        String debit_send = "SELECT * FROM DEBIT WHERE NAME=?";
-        String credit_send = "SELECT * FROM CREDIT WHERE NAME=?";
-        // collect valued amount to be sent to recipient (credit check)
-        ResultSet send_credit = state.executeQuery(credit_send);
-        String recipient_name_credit = retract_credit.getString("NAME");
-        // collect valued amount to be sent to recipient (debit check)
-        ResultSet send_debit = state.executeQuery(debit_send);
-        String recipient_name_debit = retract_credit.getString("NAME");
-        if (recipient_name_debit.equals(name)) {
-            String send = "UPDATE DEBIT set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setBigDecimal(1, exchange);
-            stat.setString(2, name);
-            stat.executeUpdate();
-            send_debit.close();
-        } else if (recipient_name_credit.equals(name)) {
-            String send = "UPDATE CREDIT set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat = connect().prepareStatement(send);
-            stat.setBigDecimal(1, exchange);
-            stat.setString(2, name);
-            stat.executeUpdate();
-            send_credit.close();
-        } else {
-            System.out.println("Transfer cannot be processed, feel free to try again");
-            International_transactions(cardcode, country, amount, name);
-        }
+        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retract_credit);
+        stat.setBigDecimal(1, num);
+        stat.setBigDecimal(2, num);
+        stat.setInt(3, cardcode);
+        stat.executeUpdate();
         state.close();
-        connect().close();
-        return "Transaction complete";
+        System.out.println("Currency Converted on account");
     }
-    
-    public String delete(String CardCode) throws SQLException {
-        cur.delete_account(CardCode);
-        return "Account being deleted";
+
+    public void International_transactions_Debit(int cardcode, String base_country, String Converto_country, BigDecimal amount, String name) throws SQLException, IOException {
+        Currency currency_base = Currency.getInstance(base_country);// base currency will be converted to this
+        String convert_base = currency_base.getCurrencyCode();
+        Currency convert_into = Currency.getInstance(Converto_country);
+        String convertion = convert_into.getCurrencyCode();
+        String concat = convert_base + convertion;
+        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
+        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
+        BigDecimal Transaction_value_interdebit = amount.divide(num, RoundingMode.CEILING);
+        if (convert_base.equals(concat)) {
+            Statement state = connect().createStatement();
+            String debit_statement = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+            PreparedStatement stat = connect().prepareStatement(debit_statement);
+            stat.setBigDecimal(1, Transaction_value_interdebit);
+            stat.setInt(2, cardcode);
+            String recieve_money = "UPDATE InterDEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(recieve_money);
+            stat2.setBigDecimal(1, Transaction_value_interdebit);
+            stat2.setString(2, name);
+            stat2.executeUpdate();
+            System.out.println("Transfer complete");
+            state.close();
+        } else {
+            International_transactions_send_to_Debit(cardcode, base_country, Converto_country, amount, name);
+        }
     }
-    
-    public static void main(String[] args) {
-        Inov.intro();
+
+    public void International_transactions_send_to_Debit(int cardcode, String base_country, String Converto_country, BigDecimal amount, String name) throws SQLException, IOException {
+        Currency currency_base = Currency.getInstance(base_country);// base currency will be converted to this
+        String convert_base = currency_base.getCurrencyCode();
+        Currency convert_into = Currency.getInstance(Converto_country);
+        String convertion = convert_into.getCurrencyCode();
+        String concat = convert_base + convertion;
+        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
+        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
+        BigDecimal Transaction_value_debit = amount.divide(num, RoundingMode.CEILING);
+        if (convert_base.equals(concat)) {
+            Statement state = connect().createStatement();
+            String debit_statement = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+            PreparedStatement stat = connect().prepareStatement(debit_statement);
+            stat.setBigDecimal(1, Transaction_value_debit);
+            stat.setInt(2, cardcode);
+            String recieve_money = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(recieve_money);
+            stat2.setBigDecimal(1, Transaction_value_debit);
+            stat2.setString(2, name);
+            stat2.executeUpdate();
+            System.out.println("Transfer complete");
+            state.close();
+        } else {
+            International_transactions_send_to_credit(cardcode, base_country, Converto_country, amount, name);
+        }
+    }
+
+    public void International_transactions_send_to_credit(int cardcode, String base_country, String Converto_country, BigDecimal amount, String name) throws IOException, SQLException {
+        Currency currency_base_intercredit = Currency.getInstance(base_country);// base currency will be converted to this
+        String convert_base_intercredit = currency_base_intercredit.getCurrencyCode();
+        Currency convert_into_intercredit = Currency.getInstance(Converto_country);
+        String convertion_intercredit = convert_into_intercredit.getCurrencyCode();
+        String concat_intercredit = convert_base_intercredit + convertion_intercredit;
+        BigDecimal conver_intercredit = YahooFinance.getFx(concat_intercredit).getPrice();
+        BigDecimal num_intercredit = BigDecimal.valueOf(conver_intercredit.doubleValue());
+        BigDecimal Transaction_value_credit = amount.divide(num_intercredit, RoundingMode.CEILING);
+        Statement state = connect().createStatement();
+        String debit_statement = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(debit_statement);
+        stat.setBigDecimal(1, Transaction_value_credit);
+        stat.setInt(2, cardcode);
+        String recieve_money = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(recieve_money);
+        stat2.setBigDecimal(1, Transaction_value_credit);
+        stat2.setString(2, name);
+        stat2.executeUpdate();
+        System.out.println("Transfer complete");
+        state.close();
+
+        }
     }
 
 
-}
+
+
+
+
