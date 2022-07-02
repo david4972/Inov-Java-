@@ -1,11 +1,19 @@
 import javax.crypto.KeyGenerator;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.sql.*;
 import java.util.Currency;
+import java.util.Properties;
 import java.util.Scanner;
 import yahoofinance.YahooFinance;
 import yahoofinance.quotes.fx.FxSymbols;
@@ -84,6 +92,7 @@ public class inov {
                 pstmt.setString(7, address);
                 pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
+                send_mail_new_Account_Debit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -138,6 +147,7 @@ public class inov {
                 pstmt.setString(7, address);
                 pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
+                send_mail_new_Account_International_Debit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -192,6 +202,7 @@ public class inov {
                 pstmt.setString(7, address);
                 pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
+                send_mail_new_Account_Credit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -208,7 +219,7 @@ public class inov {
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
-        // String email = retract_debit.getString("EMAIL");
+        String email = retract_debit.getString("EMAIL");
         // transaction processing
         String debit_data = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
@@ -216,6 +227,7 @@ public class inov {
         stat.setInt(2, cardno);
         stat.executeUpdate();// transaction complete
         System.out.println("Deposit successful");
+        send_mail_deposit_Checking(email, deposit);
     }
 
 
@@ -226,7 +238,7 @@ public class inov {
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
         // String name = retract_debit.getString("NAME");
-        // String email = retract_debit.getString("EMAIL");
+        String email = retract_debit.getString("EMAIL");
         // transaction processing
         String debit_data = "UPDATE DEBITInov set SAVING=SAVING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
@@ -237,16 +249,17 @@ public class inov {
         state.close();
         connect().close();
         System.out.println("Deposit successful");
+        send_mail_deposit_savings(email, deposit);
     }
 
     public void deposit_checking_credit(int cardno, double deposit) throws SQLException {
-        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String credit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
 
         Statement state = connect().createStatement();
         // Debit account check
-        ResultSet retract_credit = state.executeQuery(debit_sql);
+        ResultSet retract_credit = state.executeQuery(credit_sql);
         // String name = retract_debit.getString("NAME");
-        // String email = retract_debit.getString("EMAIL");
+        String email = retract_credit.getString("EMAIL");
         // transaction processing
         String credit_data = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(credit_data);
@@ -257,26 +270,28 @@ public class inov {
         state.close();
         connect().close();
         System.out.println("Deposit successful");
+        send_mail_deposit_Checking(email, deposit);
     }
 
     public void deposit_saving_credit(int cardno, double deposit) throws SQLException {
-        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String credit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
 
         Statement state = connect().createStatement();
         // Debit account check
-        ResultSet retract_debit = state.executeQuery(debit_sql);
+        ResultSet retract_credit = state.executeQuery(credit_sql);
         // String name = retract_debit.getString("NAME");
-        // String email = retract_debit.getString("EMAIL");
+        String email = retract_credit.getString("EMAIL");
         // transaction processing
         String debit_data = "UPDATE CREDITInov set SAVING=SAVING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, deposit);
         stat.setInt(2, cardno);
         stat.executeUpdate();
-        retract_debit.close(); // transaction complete
+        retract_credit.close(); // transaction complete
         state.close();
         connect().close();
         System.out.println("Deposit successful");
+        send_mail_deposit_savings(email, deposit);
     }
 
 
@@ -351,19 +366,24 @@ public class inov {
         Statement state = connect().createStatement();
         // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
         if (retract_debit.next()) {
             String retrieve = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
             stat.setInt(2, cardcode);
-            String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(accept);
+            String accept1 = "SELECT * FROM DEBITInov WHERE NAME=?";
+            ResultSet retract_credit = state.executeQuery(accept1);
+            String email = retract_credit.getString("EMAIL");
+            String accept2 = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            PreparedStatement stat2 = connect().prepareStatement(accept2);
             stat2.setDouble(1, amount);
             stat2.setString(2, recipient);
             stat.executeUpdate();
             stat2.executeUpdate();
             System.out.println("Transfer processed");
             retract_debit.close();
+            send_mail_transaction(email, amount, name);
         } else {
             send_to_credit(cardcode, amount, recipient);
         }
@@ -373,12 +393,17 @@ public class inov {
         String debit_transfer = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_credit = state.executeQuery(debit_transfer);
         String retrieve = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retrieve);
         stat.setDouble(1, amount);
         stat.setInt(2, cardcode);
+        String accept1 = "SELECT * FROM CREDITInov WHERE NAME=?";
+        ResultSet retract_credit_pay = state.executeQuery(accept1);
+        String email = retract_credit_pay.getString("EMAIL");
         String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
         PreparedStatement stat2 = connect().prepareStatement(accept);
         stat2.setDouble(1, amount);
@@ -387,6 +412,7 @@ public class inov {
         stat2.executeUpdate();
         retract_debit.close();
         System.out.println("Transfer processed");
+        send_mail_transaction(email, amount, name);
     }
 
     // Credit
@@ -394,6 +420,8 @@ public class inov {
         String debit_transfer = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
+        ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
         // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_credit = state.executeQuery(debit_transfer);
         // int card_code = retract_debit.getInt("CARDNUM");
@@ -402,6 +430,9 @@ public class inov {
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
             stat.setInt(2, cardcode);
+            String accept1 = "SELECT * FROM CREDITInov WHERE NAME=?";
+            ResultSet retract_credit_pay = state.executeQuery(accept1);
+            String email = retract_credit_pay.getString("EMAIL");
             String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
             PreparedStatement stat2 = connect().prepareStatement(accept);
             stat2.setDouble(1, amount);
@@ -410,6 +441,7 @@ public class inov {
             stat2.executeUpdate();
             System.out.println("Transfer processed");
             retract_credit.close();
+            send_mail_transaction(email, amount, name);
         } else {
             send_to_debit(cardcode, amount, recipient);
         }
@@ -420,12 +452,15 @@ public class inov {
         String debit_transfer = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
         String retrieve = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retrieve);
         stat.setDouble(1, amount);
         stat.setInt(2, cardcode);
+        String accept1 = "SELECT * FROM DEBITInov WHERE NAME=?";
+        ResultSet retract_credit_pay = state.executeQuery(accept1);
+        String email = retract_credit_pay.getString("EMAIL");
         String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
         PreparedStatement stat2 = connect().prepareStatement(accept);
         stat2.setDouble(1, amount);
@@ -434,20 +469,25 @@ public class inov {
         stat2.executeUpdate();
         retract_debit.close();
         System.out.println("Transfer processed");
+        send_mail_transaction(email, amount, name);
     }
 
-    public void send_money_debit_international(int cardcode, double amount, String recipient) throws SQLException {
+    public void send_money_debit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
         String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
+        // collect valued amount to be sent to recipient (debit check)
         int card_code = retract_debit.getInt("CARDNUM");
         if (card_code == cardcode) {
             String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
             stat.setInt(2, cardcode);
+            String accept1 = "SELECT * FROM InterDEBITInov  WHERE NAME=?";
+            ResultSet retract_credit_pay = state.executeQuery(accept1);
+            String email = retract_credit_pay.getString("EMAIL");
             String accept = "UPDATE InterDEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
             PreparedStatement stat2 = connect().prepareStatement(accept);
             stat2.setDouble(1, amount);
@@ -456,23 +496,27 @@ public class inov {
             stat2.executeUpdate();
             System.out.println("Transfer processed");
             retract_debit.close();
+            send_mail_International_transaction(email, amount, name, Country);
         } else {
-            send_to_debit_international(cardcode, amount, recipient);
+            send_to_debit_international(cardcode, amount, recipient, Country);
         }
     }
 
-    public void send_to_debit_international(int cardcode, double amount, String recipient) throws SQLException {
+    public void send_to_debit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
         String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
         int card_code = retract_debit.getInt("CARDNUM");
         if (card_code == cardcode) {
             String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
             stat.setInt(2, cardcode);
+            String accept1 = "SELECT * FROM DEBITInov  WHERE NAME=?";
+            ResultSet retract_credit_pay = state.executeQuery(accept1);
+            String email = retract_credit_pay.getString("EMAIL");
             String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
             PreparedStatement stat2 = connect().prepareStatement(accept);
             stat2.setDouble(1, amount);
@@ -481,21 +525,26 @@ public class inov {
             stat2.executeUpdate();
             System.out.println("Transfer processed");
             retract_debit.close();
+            send_mail_International_transaction(email, amount, name, Country);
         } else {
-            send_to_credit_international(cardcode, amount, recipient);
+            send_to_credit_international(cardcode, amount, recipient, Country);
         }
     }
 
-    public void send_to_credit_international(int cardcode, double amount, String recipient) throws SQLException {
+    public void send_to_credit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
         String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
+        String name = retract_debit.getString("NAME");
+        // collect valued amount to be sent to recipient (debit check)
         String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retrieve);
         stat.setDouble(1, amount);
         stat.setInt(2, cardcode);
+        String accept1 = "SELECT * FROM CREDITInov  WHERE NAME=?";
+        ResultSet retract_credit_pay = state.executeQuery(accept1);
+        String email = retract_credit_pay.getString("EMAIL");
         String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
         PreparedStatement stat2 = connect().prepareStatement(accept);
         stat2.setDouble(1, amount);
@@ -504,6 +553,7 @@ public class inov {
         stat2.executeUpdate();
         retract_debit.close();
         System.out.println("Transfer processed");
+        send_mail_International_transaction(email, amount, name, Country);
     }
 
 
@@ -826,10 +876,150 @@ public class inov {
         state.close();
 
         }
+
+    public static void send_mail_new_Account_Debit(String mail, int cardno, String cardcode ) {
+
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Congrats on your new Account!!!");
+            msg.setText("\"Congrats on your new Debit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
+                    "            \"card \" \\\n" +
+                    "            \"code that will be used to secure your account. \"");
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
     }
 
+    public static void send_mail_new_Account_Credit(String mail, int cardno, String cardcode ) {
 
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
 
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Congrats on your new Account!!!");
+            msg.setText("\"Congrats on your new Credit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
+                    "            \"card \" \\\n" +
+                    "            \"code that will be used to secure your account. \"");
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
 
+    public static void send_mail_new_Account_International_Debit(String mail, int cardno, String cardcode ) {
+
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Congrats on your new Account!!!");
+            msg.setText("\"Congrats on your new International Debit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
+                    "            \"card \" \\\n" +
+                    "            \"code that will be used to secure your account. \"");
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
+
+    public static void send_mail_transaction(String mail, double amount, String name ) {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Money Sent!!!");
+            msg.setText("You have received $ " + amount + " from " + name);
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
+
+    public static void send_mail_International_transaction(String mail, double amount, String name, String Country) {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Money Sent!!!");
+            msg.setText("You have received $ " + amount + " from " + name + "in " + Country);
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
+
+    public static void send_mail_currency_exchange(String mail, String converted_Currency) {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Converted Cash account");
+            msg.setText("You have converted your account to this currency = " + converted_Currency);
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
+
+    public static void send_mail_deposit_Checking(String mail, double deposit) {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Deposit");
+            msg.setText("You have just deposited " + deposit + "into your checking account.");
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
+    public static void send_mail_deposit_savings(String mail, double deposit) {
+        Properties props = new Properties();
+        Session session = Session.getDefaultInstance(props, null);
+
+        try {
+            Message msg = new MimeMessage(session);
+            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
+            msg.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(mail, "Mr. User"));
+            msg.setSubject("Deposit");
+            msg.setText("You have just deposited " + deposit + "into your saving account.");
+            Transport.send(msg);
+        } catch (UnsupportedEncodingException | MessagingException e) {
+            // ...
+        }
+    }
+}
 
 
