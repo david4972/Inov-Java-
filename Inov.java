@@ -25,7 +25,6 @@ import java.math.*;
 
 public class inov {
     invp pay = new invp();
-    
     CurrenciesCurrencyExchange chan = new CurrenciesCurrencyExchange();
 
     Currencies current = new Currencies();
@@ -33,7 +32,7 @@ public class inov {
     //BDMS cur = new BDMS();
     public Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inov.db";
+        String url = "jdbc:sqlite:inovproj3.0.db";
         Connection conn = null;
         // Statement state = null;
         try {
@@ -80,7 +79,7 @@ public class inov {
             create_debit_account(name, email, address);
         } else {
             //Insert inputs into database Table (creating account)
-            String read_data = "INSERT INTO DEBITInov(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
+            String read_data = "INSERT INTO InovDEBIT(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
                     "(?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = this.connect();
@@ -105,9 +104,6 @@ public class inov {
     }
 
     public void create_International_debit_account(String name, String email, String address, String Country) throws NoSuchAlgorithmException {
-        //Country
-        Currency cou = Currency.getInstance(Country);
-        String curr_code = cou.getCurrencyCode();
         // Read input scan
         Scanner scan = new Scanner(System.in);
         //Creating a KeyGenerator object Cryptography key
@@ -135,7 +131,7 @@ public class inov {
             create_debit_account(name, email, address);
         } else {
             //Insert inputs into database Table (creating account)
-            String read_data = "INSERT INTO InterDEBITInov(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
+            String read_data = "INSERT INTO InovInterDEBIT(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
                     "(?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = this.connect();
@@ -147,7 +143,7 @@ public class inov {
                 pstmt.setDouble(5, checking);
                 pstmt.setDouble(6, saving);
                 pstmt.setString(7, address);
-                pstmt.setString(8, curr_code);
+                pstmt.setString(8, Country);
                 pstmt.executeUpdate();
                 //send_mail_new_Account_International_Debit(email, card_num, get_code);
             } catch (SQLException e) {
@@ -190,20 +186,20 @@ public class inov {
             create_debit_account(name, email, address);
         } else {
             //Insert inputs into database Table (creating account)
-            String read_data = "INSERT INTO CREDITInov(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
+            String read_data = "INSERT INTO InovCREDIT(NAME, EMAIL, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY) VALUES " +
                     "(?, ?, ?, ?, ?, ?, ?, ?)";
 
             try (Connection conn = this.connect();
                  PreparedStatement pstmt = conn.prepareStatement(read_data)) {
-                pstmt.setString(1, name);
-                pstmt.setString(2, email);
-                pstmt.setInt(3, card_num);
-                pstmt.setString(4, get_code);
-                pstmt.setDouble(5, checking);
-                pstmt.setDouble(6, saving);
-                pstmt.setString(7, address);
-                pstmt.setString(8, curr_code);
-                pstmt.executeUpdate();
+                 pstmt.setString(1, name);
+                 pstmt.setString(2, email);
+                 pstmt.setInt(3, card_num);
+                 pstmt.setString(4, get_code);
+                 pstmt.setDouble(5, checking);
+                 pstmt.setDouble(6, saving);
+                 pstmt.setString(7, address);
+                 pstmt.setString(8, curr_code);
+                 pstmt.executeUpdate();
                 //send_mail_new_Account_Credit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
@@ -215,7 +211,7 @@ public class inov {
     }
 
     public void deposit_checking_debit(int cardno, double deposit) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        String debit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
 
         Statement state = connect().createStatement();
         // Debit account check
@@ -223,7 +219,7 @@ public class inov {
         // String name = retract_debit.getString("NAME");
         String email = retract_debit.getString("EMAIL");
         // transaction processing
-        String debit_data = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovDEBIT set CHECKING=CHECKING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, deposit);
         stat.setInt(2, cardno);
@@ -234,7 +230,7 @@ public class inov {
 
 
     public void deposit_saving_debit(int cardno, double deposit) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        String debit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
 
         Statement state = connect().createStatement();
         // Debit account check
@@ -242,7 +238,7 @@ public class inov {
         // String name = retract_debit.getString("NAME");
         String email = retract_debit.getString("EMAIL");
         // transaction processing
-        String debit_data = "UPDATE DEBITInov set SAVING=SAVING+? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovDEBIT set SAVING=SAVING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, deposit);
         stat.setInt(2, cardno);
@@ -255,7 +251,7 @@ public class inov {
     }
 
     public void deposit_checking_credit(int cardno, double deposit) throws SQLException {
-        String credit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String credit_sql = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
 
         Statement state = connect().createStatement();
         // Debit account check
@@ -263,7 +259,7 @@ public class inov {
         // String name = retract_debit.getString("NAME");
         String email = retract_credit.getString("EMAIL");
         // transaction processing
-        String credit_data = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE CARDNUM=?";
+        String credit_data = "UPDATE InovCREDIT set CHECKING=CHECKING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(credit_data);
         stat.setDouble(1, deposit);
         stat.setInt(2, cardno);
@@ -276,7 +272,7 @@ public class inov {
     }
 
     public void deposit_saving_credit(int cardno, double deposit) throws SQLException {
-        String credit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String credit_sql = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
 
         Statement state = connect().createStatement();
         // Debit account check
@@ -284,7 +280,7 @@ public class inov {
         // String name = retract_debit.getString("NAME");
         String email = retract_credit.getString("EMAIL");
         // transaction processing
-        String debit_data = "UPDATE CREDITInov set SAVING=SAVING+? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovCREDIT set SAVING=SAVING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, deposit);
         stat.setInt(2, cardno);
@@ -298,11 +294,11 @@ public class inov {
 
 
     public void withdraw_checking_Debit(int cardnum, double withdraw) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        String debit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
         Statement state = connect().createStatement();
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
-        String debit_data = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, withdraw);
         stat.setInt(2, cardnum);
@@ -314,11 +310,11 @@ public class inov {
     }
 
     public void withdraw_saving_Debit(int cardnum, double withdraw) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        String debit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
         Statement state = connect().createStatement();
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
-        String debit_data = "UPDATE DEBITInov set SAVING=SAVING-? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovDEBIT set SAVING=SAVING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, withdraw);
         stat.setInt(2, cardnum);
@@ -330,11 +326,11 @@ public class inov {
     }
 
     public void withdraw_checking_Credit(int cardnum, double withdraw) throws SQLException {
-        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String debit_sql = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
         Statement state = connect().createStatement();
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
-        String debit_data = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovCREDIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, withdraw);
         stat.setInt(2, cardnum);
@@ -346,11 +342,11 @@ public class inov {
     }
 
     public void withdraw_saving_Credit(int cardnum, double withdraw) throws SQLException {
-        String debit_sql = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String debit_sql = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
         Statement state = connect().createStatement();
         // Debit account check
         ResultSet retract_debit = state.executeQuery(debit_sql);
-        String debit_data = "UPDATE CREDITInov set SAVING=SAVING-? WHERE CARDNUM=?";
+        String debit_data = "UPDATE InovCREDIT set SAVING=SAVING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(debit_data);
         stat.setDouble(1, withdraw);
         stat.setInt(2, cardnum);
@@ -363,28 +359,29 @@ public class inov {
 
     // Debit
     public void send_money_debit(int cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        String debit_transfer = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
+        //String name = retract_debit.getString("NAME");
         if (retract_debit.next()) {
-            String retrieve = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+            String retrieve = "UPDATE InovDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
             stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM DEBITInov WHERE NAME=?";
-            ResultSet retract_credit = state.executeQuery(accept1);
-            String email = retract_credit.getString("EMAIL");
-            String accept2 = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            String accept1 = "SELECT * FROM InovDEBIT WHERE NAME=?";
+            ResultSet retract_deb = state.executeQuery(accept1);
+            //String email = retract_credit.getString("EMAIL");
+            String accept2 = "UPDATE InovDEBIT set CHECKING=CHECKING+? WHERE NAME=?";
             PreparedStatement stat2 = connect().prepareStatement(accept2);
             stat2.setDouble(1, amount);
             stat2.setString(2, recipient);
             stat.executeUpdate();
             stat2.executeUpdate();
-            System.out.println("Transfer processed");
             retract_debit.close();
+            retract_deb.close();
+            System.out.println("Transfer processed");
             //send_mail_transaction(email, amount, name);
         } else {
             send_to_credit(cardcode, amount, recipient);
@@ -392,21 +389,18 @@ public class inov {
     }
 
     public void send_to_credit(int cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM DEBITInov WHERE CARDNUM=?";
+        String debit_transfer = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
+        //String name = retract_debit.getString("NAME");
         // collect valued amount to be sent to recipient (debit check)
-        ResultSet retract_credit = state.executeQuery(debit_transfer);
-        String retrieve = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        //ResultSet retract_credit = state.executeQuery(debit_transfer);
+        String retrieve = "UPDATE InovDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retrieve);
         stat.setDouble(1, amount);
         stat.setInt(2, cardcode);
-        String accept1 = "SELECT * FROM CREDITInov WHERE NAME=?";
-        ResultSet retract_credit_pay = state.executeQuery(accept1);
-        String email = retract_credit_pay.getString("EMAIL");
-        String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
+        String accept = "UPDATE InovCREDIT set CHECKING=CHECKING+? WHERE NAME=?";
         PreparedStatement stat2 = connect().prepareStatement(accept);
         stat2.setDouble(1, amount);
         stat2.setString(2, recipient);
@@ -419,30 +413,31 @@ public class inov {
 
     // Credit
     public void send_money_credit(int cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String debit_transfer = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
+        //String name = retract_debit.getString("NAME");
         // collect valued amount to be sent to recipient (debit check)
         ResultSet retract_credit = state.executeQuery(debit_transfer);
         // int card_code = retract_debit.getInt("CARDNUM");
         if (retract_credit.next()) {
-            String retrieve = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+            String retrieve = "UPDATE InovCREDIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(retrieve);
             stat.setDouble(1, amount);
             stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM CREDITInov WHERE NAME=?";
+            String accept1 = "SELECT * FROM InovCREDIT WHERE NAME=?";
             ResultSet retract_credit_pay = state.executeQuery(accept1);
-            String email = retract_credit_pay.getString("EMAIL");
-            String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
+            //String email = retract_credit_pay.getString("EMAIL");
+            String accept = "UPDATE InovCREDIT set CHECKING=CHECKING+? WHERE NAME=?";
             PreparedStatement stat2 = connect().prepareStatement(accept);
             stat2.setDouble(1, amount);
             stat2.setString(2, recipient);
             stat.executeUpdate();
             stat2.executeUpdate();
-            System.out.println("Transfer processed");
             retract_credit.close();
+            retract_credit_pay.close();
+            System.out.println("Transfer processed");
+
             //send_mail_transaction(email, amount, name);
         } else {
             send_to_debit(cardcode, amount, recipient);
@@ -451,25 +446,26 @@ public class inov {
     }
 
     public void send_to_debit(int cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM CREDITInov WHERE CARDNUM=?";
+        String debit_transfer = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
         // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        String retrieve = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        //String name = retract_debit.getString("NAME");
+        String retrieve = "UPDATE InovCREDIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retrieve);
         stat.setDouble(1, amount);
         stat.setInt(2, cardcode);
-        String accept1 = "SELECT * FROM DEBITInov WHERE NAME=?";
+        String accept1 = "SELECT * FROM InovDEBIT WHERE NAME=?";
         ResultSet retract_credit_pay = state.executeQuery(accept1);
-        String email = retract_credit_pay.getString("EMAIL");
-        String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
+        //String email = retract_credit_pay.getString("EMAIL");
+        String accept = "UPDATE InovDEBIT set CHECKING=CHECKING+? WHERE NAME=?";
         PreparedStatement stat2 = connect().prepareStatement(accept);
         stat2.setDouble(1, amount);
         stat2.setString(2, recipient);
         stat.executeUpdate();
         stat2.executeUpdate();
         retract_debit.close();
+        retract_credit_pay.close();
         System.out.println("Transfer processed");
         //send_mail_transaction(email, amount, name);
     }
@@ -479,7 +475,7 @@ public class inov {
     public void debit_bank_statement(int cardcode) throws SQLException {
         // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov WHERE CARDNUM=?");
+        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM InovDEBIT WHERE CARDNUM=?");
         while (retract_debit.next()) {
             String account_name = retract_debit.getString("NAME");
             int card_num = retract_debit.getInt("CARDNUM");
@@ -501,7 +497,29 @@ public class inov {
     public void credit_bank_statement(int cardcode) throws SQLException {
         // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
-        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM CREDITInov WHERE CARDNUM=?");
+        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM InovCREDIT WHERE CARDNUM=?");
+        while (retract_credit.next()) {
+            String account_name = retract_credit.getString("NAME");
+            int card_num = retract_credit.getInt("CARDNUM");
+            String card_code = retract_credit.getString("CARDCODE");
+            double checking_balance = retract_credit.getDouble("CHECKING");
+            double saving_balance = retract_credit.getDouble("SAVING");
+            String address = retract_credit.getString("ADDRESS");
+            String currency = retract_credit.getString("CURRENCY");
+            System.out.println("Account Holder = " + account_name);
+            System.out.println("Card Numbers =  " + card_num);
+            System.out.println("Card Codes = " + card_code);
+            System.out.println("Checking Balances = " + checking_balance);
+            System.out.println("Savings Balances = " + saving_balance);
+            System.out.println("Addresses = " + address);
+            System.out.println("Currency = " + currency);
+        }
+    }
+
+    public void International_Debit_bank_statement(int cardcode) throws SQLException {
+        // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
+        Statement state = connect().createStatement();
+        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM InovInterDEBIT WHERE CARDNUM=?");
         while (retract_credit.next()) {
             String account_name = retract_credit.getString("NAME");
             int card_num = retract_credit.getInt("CARDNUM");
@@ -534,6 +552,11 @@ public class inov {
             pay.getCard_Credit(Cardcode, price);
         }
     }
+
+    public void send_accnt_International(String base_curr, String Country_name, int cardcode, double amount, String name) throws SQLException, IOException {
+        current.Country_currency_InternationalTransactions(base_curr, Country_name, cardcode, amount, name);
+    }
+
 
     public void Currency_exchange(String base_curr, String convert_curr, int cardcode) throws SQLException, IOException {
         chan.Country_currency_CurrencyExchange(base_curr, convert_curr, cardcode);
@@ -795,6 +818,7 @@ public class inov {
         }
     }
 }
+
 
 
 
