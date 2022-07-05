@@ -25,7 +25,8 @@ import java.math.*;
 
 public class inov {
     invp pay = new invp();
-    exchangeApi chan = new exchangeApi();
+    
+    CurrenciesCurrencyExchange chan = new CurrenciesCurrencyExchange();
 
     Currencies current = new Currencies();
 
@@ -535,7 +536,7 @@ public class inov {
     }
 
     public void Currency_exchange(String base_curr, String convert_curr, int cardcode) throws SQLException, IOException {
-        chan.currency_exchange(base_curr, convert_curr, cardcode);
+        chan.Country_currency_CurrencyExchange(base_curr, convert_curr, cardcode);
     }
 
     public void International_debit_send(String base_curr, String Country_name, int cardcode, double amount, String name) throws SQLException, IOException {
