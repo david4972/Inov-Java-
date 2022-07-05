@@ -16,7 +16,8 @@ public class BankSample {
         System.out.println("1. create account");
         System.out.println("2. Deposit");
         System.out.println("3. Send Money");
-        System.out.println("4. Currency Exchange");
+        System.out.println("4. Send Money International Debit");
+        System.out.println("5. Currency Exchange");
         String read = scan.nextLine();
         if (read.equals("1")){
             create_accnt();
@@ -25,6 +26,8 @@ public class BankSample {
         } if (read.equals("3")){
             send_money();
         } if (read.equals("4")){
+            international_debit_send_money();
+        } if (read.equals("5")){
             Currency_exchange();
         }
     }
@@ -126,18 +129,18 @@ public class BankSample {
         Scanner scan2 = new Scanner(System.in);
         Scanner scan3 = new Scanner(System.in);
         Scanner scan4 = new Scanner(System.in);
-        System.out.print("Will you be sending money Internationally today?: ");
+        System.out.print("Will you be sending money with Internationally today?: ");
         System.out.print("1. Yes ");
         System.out.print("2. No ");
         String inter_choice = scan4.nextLine();
         if (inter_choice.equals("1")) {
-            international_debit_send_money();
+            send_money_International();
         } else {
             System.out.print("Please enter virtual account number: ");
             int account_num = scan.nextInt();
             System.out.print("Please enter name of person receiving money: ");
             String receive = scan2.nextLine();
-            System.out.print("Please enter amount you want to deposit: ");
+            System.out.print("Please enter amount you want to send: ");
             double account_deposit = scan.nextDouble();
             System.out.println("Please select ?");
             System.out.println("1. Debit ");
@@ -150,6 +153,26 @@ public class BankSample {
             }
 
         }
+    }
+
+    public static void send_money_International() throws SQLException, IOException {
+        inov Inov2 = new inov();
+        Scanner scan_interdebit = new Scanner(System.in);
+        Scanner scan_interdebit2 = new Scanner(System.in);
+        Scanner scan_interdebit3 = new Scanner(System.in);
+        Scanner scan_interdebit4 = new Scanner(System.in);
+        Scanner scan_interdebit5 = new Scanner(System.in);
+        System.out.print("Please enter virtual account number: ");
+        int account_num = scan_interdebit.nextInt();
+        System.out.print("Please enter name of person receiving money: ");
+        String receive = scan_interdebit2.nextLine();
+        System.out.print("Please enter amount you want to transfer: ");
+        double account_val = scan_interdebit3.nextDouble();
+        System.out.print("Please enter Country code of Country you are located Ex USD (United States): ");
+        String account_base_currency = scan_interdebit4.nextLine();
+        System.out.print("Please enter name of Country where person receiving money is located: ");
+        String account_convert_currency = scan_interdebit5.nextLine();
+        Inov2.send_accnt_International(account_base_currency, account_convert_currency, account_num, account_val, receive);
     }
 
     public static void international_debit_send_money() throws SQLException, IOException {
