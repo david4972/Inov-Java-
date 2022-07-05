@@ -15,7 +15,7 @@ public class exchangeApi {
 
     public Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inov.db";
+        String url = "jdbc:sqlite:inovproj3.0.db";
         Connection conn = null;
         // Statement state = null;
         try {
@@ -48,71 +48,135 @@ public class exchangeApi {
 
         // Accessing object
         BigDecimal req_result = jsonobj.get("conversion_rate").getAsBigDecimal();
-        // String res = Double.toString(req_result);
         double res = req_result.doubleValue();
-        // System.out.println(res);
         // Account
         System.out.println("Select account");
         System.out.println("1. Debit");
         System.out.println("2. Credit");
-        System.out.println("1. International Debit");
+        System.out.println("3. International Debit");
         String read_accnt = scan.nextLine();
-        if (read_accnt.equals("1")){
+        if (read_accnt.equals("1")) {
             Currency_exchange_Debit(res, cardcode, convert_curr);
         }
-        if (read_accnt.equals("2")){
+        if (read_accnt.equals("2")) {
             Currency_exchange_Credit(res, cardcode, convert_curr);
         }
-        if (read_accnt.equals("3")){
+        if (read_accnt.equals("3")) {
             Currency_exchange_Debit_International(res, cardcode, convert_curr);
         }
     }
 
     public void Currency_exchange_Debit(double rate_Debit, int cardcode, String convert_curr) throws SQLException, IOException {
-        Statement state = connect().createStatement();
-        //String currency = "EUR";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setDouble(1, rate_Debit);
-        stat.setDouble(2, rate_Debit);
-        stat.setString(3, convert_curr);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
+        PreparedStatement stat2 = connect().prepareStatement("SELECT * FROM InovDEBIT WHERE CARDNUM=?");
+        stat2.setInt(1, cardcode);
+        ResultSet retract_credit = stat2.executeQuery();
+        while (retract_credit.next()) {
+            double checking_balance = retract_credit.getDouble("CHECKING");
+            double rate_chec = checking_balance * rate_Debit;
+            double saving_balance = retract_credit.getDouble("SAVING");
+            double rate_sav = saving_balance * rate_Debit;
+            System.out.println("Currency Conversion processing");
+            echange_debit(cardcode, convert_curr, rate_chec, rate_sav);
+
+        }
     }
 
+    public void echange_debit(int cardcode, String convert_curr, double rate_chec, double rate_sav) throws SQLException {
+        String credit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        ResultSet retract_credit = state.executeQuery(credit_sql);
+        // String name = retract_debit.getString("NAME");
+        //String email = retract_credit.getString("EMAIL");
+        // transaction processing
+        String credit_data = "UPDATE InovDEBIT set CHECKING=?, SAVING=?, CURRENCY=? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(credit_data);
+        stat.setDouble(1, rate_chec);
+        stat.setDouble(2, rate_sav);
+        stat.setString(3, convert_curr);
+        stat.setInt(4, cardcode);
+        //stat.executeUpdate();
+        retract_credit.close(); // transaction complete
+        //state.close();
+        connect().close();
+        System.out.println("Conversion successful");
+        //send_mail_deposit_Checking(email, deposit);
+
+    }
 
 
     public void Currency_exchange_Debit_International(double rate_International_Debit, int cardcode, String convert_curr) throws SQLException, IOException {
+        PreparedStatement stat2 = connect().prepareStatement("SELECT * FROM InovDEBIT WHERE CARDNUM=?");
+        stat2.setInt(1, cardcode);
+        ResultSet retract_credit = stat2.executeQuery();
+        while (retract_credit.next()) {
+            double checking_balance = retract_credit.getDouble("CHECKING");
+            double rate_chec = checking_balance * rate_International_Debit;
+            double saving_balance = retract_credit.getDouble("SAVING");
+            double rate_sav = saving_balance * rate_International_Debit;
+            System.out.println("Currency Conversion processing");
+            echange_Debit_International(cardcode, convert_curr, rate_chec, rate_sav);
+
+        }
+    }
+
+    public void echange_Debit_International(int cardcode, String convert_curr, double rate_chec, double rate_sav) throws SQLException {
+        String credit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
         Statement state = connect().createStatement();
-        //String currency = "EUR";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  InterDEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setDouble(1, rate_International_Debit);
-        stat.setDouble(2, rate_International_Debit);
+        // Debit account check
+        ResultSet retract_credit = state.executeQuery(credit_sql);
+        // String name = retract_debit.getString("NAME");
+        //String email = retract_credit.getString("EMAIL");
+        // transaction processing
+        String credit_data = "UPDATE InovDEBIT set CHECKING=?, SAVING=?, CURRENCY=? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(credit_data);
+        stat.setDouble(1, rate_chec);
+        stat.setDouble(2, rate_sav);
         stat.setString(3, convert_curr);
         stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
+        //stat.executeUpdate();
+        retract_credit.close(); // transaction complete
+        //state.close();
+        connect().close();
+        System.out.println("Conversion successful");
+        //send_mail_deposit_Checking(email, deposit);
+
     }
 
     public void Currency_exchange_Credit(double rate_Credit, int cardcode, String convert_curr) throws SQLException, IOException {
-        Statement state = connect().createStatement();
-        //String currency = "EUR";
-        // find account for requested transaction (credit check)
-        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setDouble(1, rate_Credit);
-        stat.setDouble(2, rate_Credit);
-        stat.setString(3, convert_curr);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
+        PreparedStatement stat2 = connect().prepareStatement("SELECT * FROM InovCREDIT WHERE CARDNUM=?");
+        stat2.setInt(1, cardcode);
+        ResultSet retract_credit = stat2.executeQuery();
+        while (retract_credit.next()) {
+            double checking_balance = retract_credit.getDouble("CHECKING");
+            double rate_chec = checking_balance * rate_Credit;
+            double saving_balance = retract_credit.getDouble("SAVING");
+            double rate_sav = saving_balance * rate_Credit;
+            System.out.println("Currency Conversion processing");
+            echange_credit(cardcode, convert_curr, rate_chec, rate_sav);
+
+        }
+    }
+
+    public void echange_credit(int cardcode, String convert_curr, double rate_chec, double rate_sav) throws SQLException {
+        String debit_transfer = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
+        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+        PreparedStatement state = connect().prepareStatement(debit_transfer);
+        state.setInt(1,cardcode);
+        //String name = retract_debit.getString("NAME");
+        // collect valued amount to be sent to recipient (debit check)
+        ResultSet retract_credit = state.executeQuery();
+        // int card_code = retract_debit.getInt("CARDNUM");
+        if (retract_credit.next()) {
+            //String retrieve = "UPDATE InovCREDIT set CHECKING=CHECKING*?, SAVING=SAVING*?, CURRENCY=? WHERE CARDNUM=?";
+            PreparedStatement stat = connect().prepareStatement("UPDATE InovCREDIT set CHECKING=CHECKING*?, SAVING=SAVING*?, CURRENCY=? WHERE CARDNUM=?");
+            stat.setDouble(1, rate_chec);
+            stat.setDouble(2, rate_sav);
+            stat.setString(3, convert_curr);
+            stat.setInt(4, cardcode);
+            System.out.println("Conversion successful");
+            //send_mail_deposit_Checking(email, deposit);
+        }
     }
 
 }
