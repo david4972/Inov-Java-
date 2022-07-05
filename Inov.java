@@ -6,7 +6,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+//import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
@@ -16,7 +16,7 @@ import java.util.Currency;
 import java.util.Properties;
 import java.util.Scanner;
 import yahoofinance.YahooFinance;
-import yahoofinance.quotes.fx.FxSymbols;
+//import yahoofinance.quotes.fx.FxSymbols;
 
 import java.math.*;
 
@@ -24,9 +24,10 @@ import java.math.*;
 
 
 public class inov {
-    Currency usa = Currency.getInstance("USD"); //base currency (US only)
-
     invp pay = new invp();
+    exchangeApi chan = new exchangeApi();
+
+    Currencies current = new Currencies();
 
     //BDMS cur = new BDMS();
     public Connection connect() {
@@ -92,7 +93,7 @@ public class inov {
                 pstmt.setString(7, address);
                 pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
-                send_mail_new_Account_Debit(email, card_num, get_code);
+                //send_mail_new_Account_Debit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -147,7 +148,7 @@ public class inov {
                 pstmt.setString(7, address);
                 pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
-                send_mail_new_Account_International_Debit(email, card_num, get_code);
+                //send_mail_new_Account_International_Debit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -202,7 +203,7 @@ public class inov {
                 pstmt.setString(7, address);
                 pstmt.setString(8, curr_code);
                 pstmt.executeUpdate();
-                send_mail_new_Account_Credit(email, card_num, get_code);
+                //send_mail_new_Account_Credit(email, card_num, get_code);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -227,7 +228,7 @@ public class inov {
         stat.setInt(2, cardno);
         stat.executeUpdate();// transaction complete
         System.out.println("Deposit successful");
-        send_mail_deposit_Checking(email, deposit);
+        //send_mail_deposit_Checking(email, deposit);
     }
 
 
@@ -249,7 +250,7 @@ public class inov {
         state.close();
         connect().close();
         System.out.println("Deposit successful");
-        send_mail_deposit_savings(email, deposit);
+        //send_mail_deposit_Saving(email, deposit);
     }
 
     public void deposit_checking_credit(int cardno, double deposit) throws SQLException {
@@ -270,7 +271,7 @@ public class inov {
         state.close();
         connect().close();
         System.out.println("Deposit successful");
-        send_mail_deposit_Checking(email, deposit);
+        //send_mail_deposit_Checking(email, deposit);
     }
 
     public void deposit_saving_credit(int cardno, double deposit) throws SQLException {
@@ -291,7 +292,7 @@ public class inov {
         state.close();
         connect().close();
         System.out.println("Deposit successful");
-        send_mail_deposit_savings(email, deposit);
+        //send_mail_deposit_Saving(email, deposit);
     }
 
 
@@ -383,7 +384,7 @@ public class inov {
             stat2.executeUpdate();
             System.out.println("Transfer processed");
             retract_debit.close();
-            send_mail_transaction(email, amount, name);
+            //send_mail_transaction(email, amount, name);
         } else {
             send_to_credit(cardcode, amount, recipient);
         }
@@ -412,7 +413,7 @@ public class inov {
         stat2.executeUpdate();
         retract_debit.close();
         System.out.println("Transfer processed");
-        send_mail_transaction(email, amount, name);
+        //send_mail_transaction(email, amount, name);
     }
 
     // Credit
@@ -441,7 +442,7 @@ public class inov {
             stat2.executeUpdate();
             System.out.println("Transfer processed");
             retract_credit.close();
-            send_mail_transaction(email, amount, name);
+            //send_mail_transaction(email, amount, name);
         } else {
             send_to_debit(cardcode, amount, recipient);
         }
@@ -469,94 +470,8 @@ public class inov {
         stat2.executeUpdate();
         retract_debit.close();
         System.out.println("Transfer processed");
-        send_mail_transaction(email, amount, name);
+        //send_mail_transaction(email, amount, name);
     }
-
-    public void send_money_debit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
-        String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        // collect valued amount to be sent to recipient (debit check)
-        int card_code = retract_debit.getInt("CARDNUM");
-        if (card_code == cardcode) {
-            String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(retrieve);
-            stat.setDouble(1, amount);
-            stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM InterDEBITInov  WHERE NAME=?";
-            ResultSet retract_credit_pay = state.executeQuery(accept1);
-            String email = retract_credit_pay.getString("EMAIL");
-            String accept = "UPDATE InterDEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(accept);
-            stat2.setDouble(1, amount);
-            stat2.setString(2, recipient);
-            stat.executeUpdate();
-            stat2.executeUpdate();
-            System.out.println("Transfer processed");
-            retract_debit.close();
-            send_mail_International_transaction(email, amount, name, Country);
-        } else {
-            send_to_debit_international(cardcode, amount, recipient, Country);
-        }
-    }
-
-    public void send_to_debit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
-        String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        int card_code = retract_debit.getInt("CARDNUM");
-        if (card_code == cardcode) {
-            String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(retrieve);
-            stat.setDouble(1, amount);
-            stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM DEBITInov  WHERE NAME=?";
-            ResultSet retract_credit_pay = state.executeQuery(accept1);
-            String email = retract_credit_pay.getString("EMAIL");
-            String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(accept);
-            stat2.setDouble(1, amount);
-            stat2.setString(2, recipient);
-            stat.executeUpdate();
-            stat2.executeUpdate();
-            System.out.println("Transfer processed");
-            retract_debit.close();
-            send_mail_International_transaction(email, amount, name, Country);
-        } else {
-            send_to_credit_international(cardcode, amount, recipient, Country);
-        }
-    }
-
-    public void send_to_credit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
-        String debit_transfer = "SELECT * FROM InterDEBITInov WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        // collect valued amount to be sent to recipient (debit check)
-        String retrieve = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retrieve);
-        stat.setDouble(1, amount);
-        stat.setInt(2, cardcode);
-        String accept1 = "SELECT * FROM CREDITInov  WHERE NAME=?";
-        ResultSet retract_credit_pay = state.executeQuery(accept1);
-        String email = retract_credit_pay.getString("EMAIL");
-        String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
-        PreparedStatement stat2 = connect().prepareStatement(accept);
-        stat2.setDouble(1, amount);
-        stat2.setString(2, recipient);
-        stat.executeUpdate();
-        stat2.executeUpdate();
-        retract_debit.close();
-        System.out.println("Transfer processed");
-        send_mail_International_transaction(email, amount, name, Country);
-    }
-
-
 
 
 
@@ -619,407 +534,266 @@ public class inov {
         }
     }
 
-    public void Currency_exchange_Debit_EUR(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDEUR).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "EUR";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
+    public void Currency_exchange(String base_curr, String convert_curr, int cardcode) throws SQLException, IOException {
+        chan.currency_exchange(base_curr, convert_curr, cardcode);
     }
 
-    public void Currency_exchange_Debit_GBP(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDGBP).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "GBP";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
+    public void International_debit_send(String base_curr, String Country_name, int cardcode, double amount, String name) throws SQLException, IOException {
+        current.Country_currency_InternationalTransactions(base_curr, Country_name, cardcode, amount, name);
     }
 
-    public void Currency_exchange_Debit_AUS(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDAUD).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "AUD";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
 
-    public void Currency_exchange_Debit_JPY(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDJPY).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "JPY";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Debit_HKD(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDHKD).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "HKD";
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  DEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Debit_International(int cardcode, String base_country, String Converto_country) throws SQLException, IOException {
-        // base currency will be converted to this
-        String base = String.valueOf(Currency.getInstance(base_country));
-        String conv  = String.valueOf(Currency.getInstance(Converto_country));
-        String concat =  base.concat(conv);
-        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
-        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        //String debit_statement = "SELECT *  FROM DEBITInov WHERE CARDNUM=?";
-        Statement state = connect().createStatement();
-        // find account for requested transaction (credit check)
-        String retract_debit = "UPDATE  InterDEBITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_debit);
-        stat.setBigDecimal(1, num);
-        stat.setBigDecimal(2, num);
-        stat.setInt(3, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Credit_EUR(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDEUR).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "EUR";
-        // find account for requested transaction (credit check)
-        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Credit_GBP(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDGBP).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "GBP";
-        // find account for requested transaction (credit check)
-        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Credit_AUS(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDAUD).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "AUD";
-        // find account for requested transaction (credit check)
-        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Credit_JPY(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDJPY).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "JPY";
-        // find account for requested transaction (credit check)
-        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void Currency_exchange_Credit_HongKong(int cardcode) throws SQLException, IOException {
-        BigDecimal convert = YahooFinance.getFx(FxSymbols.USDHKD).getPrice();
-        Statement state = connect().createStatement();
-        String currency = "HKD";
-        // find account for requested transaction (credit check)
-        String retract_credit = "UPDATE  CREDITInov set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=?, WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retract_credit);
-        stat.setBigDecimal(1, convert);
-        stat.setBigDecimal(2, convert);
-        stat.setString(3, currency);
-        stat.setInt(4, cardcode);
-        stat.executeUpdate();
-        state.close();
-        System.out.println("Currency Converted on account");
-    }
-
-    public void International_transactions_Debit(int cardcode, String base_country, String Converto_country, BigDecimal amount, String name) throws SQLException, IOException {
-        Currency currency_base = Currency.getInstance(base_country);// base currency will be converted to this
-        String convert_base = currency_base.getCurrencyCode();
-        Currency convert_into = Currency.getInstance(Converto_country);
-        String convertion = convert_into.getCurrencyCode();
-        String concat = convert_base + convertion;
-        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
-        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        BigDecimal Transaction_value_interdebit = amount.divide(num, RoundingMode.CEILING);
-        if (convert_base.equals(concat)) {
-            Statement state = connect().createStatement();
-            String debit_statement = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(debit_statement);
-            stat.setBigDecimal(1, Transaction_value_interdebit);
-            stat.setInt(2, cardcode);
-            String recieve_money = "UPDATE InterDEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(recieve_money);
-            stat2.setBigDecimal(1, Transaction_value_interdebit);
-            stat2.setString(2, name);
-            stat2.executeUpdate();
-            System.out.println("Transfer complete");
-            state.close();
-        } else {
-            International_transactions_send_to_Debit(cardcode, base_country, Converto_country, amount, name);
-        }
-    }
-
-    public void International_transactions_send_to_Debit(int cardcode, String base_country, String Converto_country, BigDecimal amount, String name) throws SQLException, IOException {
-        Currency currency_base = Currency.getInstance(base_country);// base currency will be converted to this
-        String convert_base = currency_base.getCurrencyCode();
-        Currency convert_into = Currency.getInstance(Converto_country);
-        String convertion = convert_into.getCurrencyCode();
-        String concat = convert_base + convertion;
-        BigDecimal convert = YahooFinance.getFx(concat).getPrice();
-        BigDecimal num = BigDecimal.valueOf(convert.doubleValue());
-        BigDecimal Transaction_value_debit = amount.divide(num, RoundingMode.CEILING);
-        if (convert_base.equals(concat)) {
-            Statement state = connect().createStatement();
-            String debit_statement = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(debit_statement);
-            stat.setBigDecimal(1, Transaction_value_debit);
-            stat.setInt(2, cardcode);
-            String recieve_money = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(recieve_money);
-            stat2.setBigDecimal(1, Transaction_value_debit);
-            stat2.setString(2, name);
-            stat2.executeUpdate();
-            System.out.println("Transfer complete");
-            state.close();
-        } else {
-            International_transactions_send_to_credit(cardcode, base_country, Converto_country, amount, name);
-        }
-    }
-
-    public void International_transactions_send_to_credit(int cardcode, String base_country, String Converto_country, BigDecimal amount, String name) throws IOException, SQLException {
-        Currency currency_base_intercredit = Currency.getInstance(base_country);// base currency will be converted to this
-        String convert_base_intercredit = currency_base_intercredit.getCurrencyCode();
-        Currency convert_into_intercredit = Currency.getInstance(Converto_country);
-        String convertion_intercredit = convert_into_intercredit.getCurrencyCode();
-        String concat_intercredit = convert_base_intercredit + convertion_intercredit;
-        BigDecimal conver_intercredit = YahooFinance.getFx(concat_intercredit).getPrice();
-        BigDecimal num_intercredit = BigDecimal.valueOf(conver_intercredit.doubleValue());
-        BigDecimal Transaction_value_credit = amount.divide(num_intercredit, RoundingMode.CEILING);
-        Statement state = connect().createStatement();
-        String debit_statement = "UPDATE InterDEBITInov set CHECKING=CHECKING-? WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(debit_statement);
-        stat.setBigDecimal(1, Transaction_value_credit);
-        stat.setInt(2, cardcode);
-        String recieve_money = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
-        PreparedStatement stat2 = connect().prepareStatement(recieve_money);
-        stat2.setBigDecimal(1, Transaction_value_credit);
-        stat2.setString(2, name);
-        stat2.executeUpdate();
-        System.out.println("Transfer complete");
-        state.close();
-
-        }
 
     public static void send_mail_new_Account_Debit(String mail, int cardno, String cardcode ) {
-
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "204.14.73.237";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
 
         try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Congrats on your new Account!!!");
-            msg.setText("\"Congrats on your new Debit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Congrats on your new Account!!!");
+            message.setText("\"Congrats on your new Debit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
                     "            \"card \" \\\n" +
                     "            \"code that will be used to secure your account. \"");
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+            Transport.send(message);
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
 
     public static void send_mail_new_Account_Credit(String mail, int cardno, String cardcode ) {
-
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "127.0.0.1";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
 
         try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Congrats on your new Account!!!");
-            msg.setText("\"Congrats on your new Credit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Congrats on your new Account!!!");
+            message.setText("\"Congrats on your new Credit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
                     "            \"card \" \\\n" +
                     "            \"code that will be used to secure your account. \"");
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+            Transport.send(message);
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
 
     public static void send_mail_new_Account_International_Debit(String mail, int cardno, String cardcode ) {
-
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "172.16.29.25";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
 
         try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Congrats on your new Account!!!");
-            msg.setText("\"Congrats on your new International Debit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Congrats on your new Account!!!");
+            message.setText("\"Congrats on your new International Debit Bank account!!! This " + cardno + " is your card number. This " + cardcode + " is your secured \" \\\n" +
                     "            \"card \" \\\n" +
                     "            \"code that will be used to secure your account. \"");
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+            Transport.send(message);
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
 
     public static void send_mail_transaction(String mail, double amount, String name ) {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
-
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "127.0.0.1";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
         try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Money Sent!!!");
-            msg.setText("You have received $ " + amount + " from " + name);
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Money Sent!!!");
+            message.setText("You have received $ " + amount + " from " + name);
+            Transport.send(message);
+            Transport.send(message);
+            System.out.println("Mail successfully sent");
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
 
     public static void send_mail_International_transaction(String mail, double amount, String name, String Country) {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
-
-        try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Money Sent!!!");
-            msg.setText("You have received $ " + amount + " from " + name + "in " + Country);
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "127.0.0.1";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
+        try
+        {
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Money Sent!!!");
+            message.setText("You have received $ " + amount + " from " + name + "in " + Country);
+            Transport.send(message);
+            System.out.println("Mail successfully sent");
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
 
     public static void send_mail_currency_exchange(String mail, String converted_Currency) {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
-
-        try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Converted Cash account");
-            msg.setText("You have converted your account to this currency = " + converted_Currency);
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "127.0.0.1";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
+        try
+        {
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Converted Cash account");
+            // set body of the email.
+            message.setText("You have converted your account to this currency = " + converted_Currency);
+            // Send email.
+            Transport.send(message);
+            System.out.println("Mail successfully sent");
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
+
 
     public static void send_mail_deposit_Checking(String mail, double deposit) {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
-
-        try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Deposit");
-            msg.setText("You have just deposited " + deposit + "into your checking account.");
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "127.0.0.1";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
+        try
+        {
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Deposit");
+            // set body of the email.
+            message.setText("You have just deposited " + deposit + "into your checking account.");
+            // Send email.
+            Transport.send(message);
+            System.out.println("Mail successfully sent");
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
-    public static void send_mail_deposit_savings(String mail, double deposit) {
-        Properties props = new Properties();
-        Session session = Session.getDefaultInstance(props, null);
 
-        try {
-            Message msg = new MimeMessage(session);
-            msg.setFrom(new InternetAddress("monetarytransatlantic@gmail.com", "MT"));
-            msg.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(mail, "Mr. User"));
-            msg.setSubject("Deposit");
-            msg.setText("You have just deposited " + deposit + "into your saving account.");
-            Transport.send(msg);
-        } catch (UnsupportedEncodingException | MessagingException e) {
-            // ...
+    public static void send_mail_deposit_Saving(String mail, double deposit) {
+        // email ID of  Sender.
+        String sender = "monetarytransatlantic@gmail.com";
+        // using host as localhost
+        String host = "127.0.0.1";
+        // Getting system properties
+        Properties properties = System.getProperties();
+        // Setting up mail server
+        properties.setProperty("mail.smtp.host", host);
+        // creating session object to get properties
+        Session session = Session.getDefaultInstance(properties);
+        try
+        {
+            // MimeMessage object.
+            MimeMessage message = new MimeMessage(session);
+            // Set From Field: adding senders email to from field.
+            message.setFrom(new InternetAddress(sender));
+            // Set To Field: adding recipient's email to from field.
+            message.addRecipient(Message.RecipientType.TO, new InternetAddress(mail));
+            // Set Subject: subject of the email
+            message.setSubject("Deposit");
+            // set body of the email.
+            message.setText("You have just deposited " + deposit + "into your saving account.");
+            // Send email.
+            Transport.send(message);
+            System.out.println("Mail successfully sent");
+        }
+        catch (MessagingException mex) {
+            mex.printStackTrace();
         }
     }
 }
+
 
 
