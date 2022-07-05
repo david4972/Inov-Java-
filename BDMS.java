@@ -7,7 +7,7 @@ public class BDMS {
 
     public static Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inov.db";
+        String url = "jdbc:sqlite:inovproj3.0.db";
         Connection conn = null;
         // Statement state = null;
         try {
@@ -55,7 +55,7 @@ public class BDMS {
     public static void debit_accounts() throws SQLException {
         // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov");
+        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM InovDEBIT");
         while (retract_debit.next()) {
             String account_name = retract_debit.getString("NAME");
             int card_num = retract_debit.getInt("CARDNUM");
@@ -77,7 +77,7 @@ public class BDMS {
     public static void credit_accounts() throws SQLException {
         // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
-        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM CREDITInov");
+        ResultSet retract_credit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM InovCREDIT");
         while (retract_credit.next()) {
             String account_name = retract_credit.getString("NAME");
             int card_num = retract_credit.getInt("CARDNUM");
@@ -95,7 +95,31 @@ public class BDMS {
             System.out.println("Currency = " + currency);
             }
         }
+
+    //International Debit Account systems
+    public static void International_debit_accounts() throws SQLException {
+        // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
+        Statement state = connect().createStatement();
+        ResultSet retract_debit = state.executeQuery("SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM InovInterDEBIT");
+        while (retract_debit.next()) {
+            String account_name = retract_debit.getString("NAME");
+            int card_num = retract_debit.getInt("CARDNUM");
+            String card_code = retract_debit.getString("CARDCODE");
+            double checking_balance = retract_debit.getDouble("CHECKING");
+            double saving_balance = retract_debit.getDouble("SAVING");
+            String address = retract_debit.getString("ADDRESS");
+            String currency = retract_debit.getString("CURRENCY");
+            System.out.println("Account Holder = " + account_name);
+            System.out.println("Card Numbers =  " + card_num);
+            System.out.println("Card Codes = " + card_code);
+            System.out.println("Checking Balances = " + checking_balance);
+            System.out.println("Savings Balances = " + saving_balance);
+            System.out.println("Addresses = " + address);
+            System.out.println("Currency = " + currency);
+        }
+    }
         public static void main(String[] args) throws SQLException, ClassNotFoundException {
             debit_accounts();
     }
 }
+
