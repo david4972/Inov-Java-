@@ -4,11 +4,10 @@ public class invp {
 
     public Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inovproj3.0.db";
         Connection conn = null;
         // Statement state = null;
         try {
-            conn = DriverManager.getConnection(url);
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -21,7 +20,7 @@ public class invp {
         //String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         // find account for requested bank statement (credit check)
-        ResultSet retract_debit = state.executeQuery("SELECT * FROM DEBITInov WHERE CARD-CODE=?");
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM InovDEBIT WHERE CARD-CODE=?");
         String email = retract_debit.getString("EMAIL");
         String name = retract_debit.getString("NAME");
         retract_debit.close();
@@ -35,8 +34,8 @@ public class invp {
 
         Statement state = connect().createStatement();;
         // find account for requested bank statement (debit check)
-        ResultSet retract_debit = state.executeQuery("SELECT * FROM DEBITInov WHERE CARDCODE=?, WHERE NAME=?");
-        String charge = "UPDATE DEBITInov set CHECKING=CHECKING-? WHERE CARDCODE=?";
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM InovDEBIT WHERE CARDCODE=?, WHERE NAME=?");
+        String charge = "UPDATE InovDEBIT set CHECKING=CHECKING-? WHERE CARDCODE=?";
         PreparedStatement stat = connect().prepareStatement(charge);
         stat.setDouble(1, price);
         stat.setString(2, CardCode);
@@ -88,5 +87,6 @@ public class invp {
         System.out.print(message);
     }
 }
+
 
 
