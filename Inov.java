@@ -6,8 +6,7 @@ import javax.mail.Transport;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.io.IOException;
-//import java.io.UnsupportedEncodingException;
-import java.math.BigDecimal;
+//import java.math.BigDecimal;
 import java.security.Key;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -15,9 +14,6 @@ import java.sql.*;
 import java.util.Currency;
 import java.util.Properties;
 import java.util.Scanner;
-import yahoofinance.YahooFinance;
-//import yahoofinance.quotes.fx.FxSymbols;
-
 import java.math.*;
 
 
@@ -32,11 +28,10 @@ public class inov {
     //BDMS cur = new BDMS();
     public Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inovproj3.0.db";
         Connection conn = null;
         // Statement state = null;
         try {
-            conn = DriverManager.getConnection(url);
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -257,7 +252,7 @@ public class inov {
         // Debit account check
         ResultSet retract_credit = state.executeQuery(credit_sql);
         // String name = retract_debit.getString("NAME");
-        String email = retract_credit.getString("EMAIL");
+        //String email = retract_credit.getString("EMAIL");
         // transaction processing
         String credit_data = "UPDATE InovCREDIT set CHECKING=CHECKING+? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(credit_data);
@@ -818,6 +813,15 @@ public class inov {
         }
     }
 }
+
+
+
+
+
+
+
+
+
 
 
 
