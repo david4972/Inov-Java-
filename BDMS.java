@@ -1,4 +1,3 @@
-// Database System
 import java.sql.*;
 
 public class BDMS {
@@ -7,11 +6,10 @@ public class BDMS {
 
     public static Connection connect() {
         // Database connection string
-        String url = "jdbc:sqlite:inovproj3.0.db";
         Connection conn = null;
         // Statement state = null;
         try {
-            conn = DriverManager.getConnection(url);
+            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
         } catch (SQLException e) {
             System.out.println(e.getMessage());
         }
@@ -119,7 +117,12 @@ public class BDMS {
         }
     }
         public static void main(String[] args) throws SQLException, ClassNotFoundException {
+            credit_accounts();
+            International_debit_accounts();
             debit_accounts();
     }
 }
+
+
+
 
