@@ -2,16 +2,17 @@ import java.sql.*;
 
 public class invp {
 
-    public Connection connect() {
-        // Database connection string
-        Connection conn = null;
-        // Statement state = null;
+    public static Connection connect() {
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            Class.forName("org.postgresql.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            System.out.println("Connecting to network.");
+            return connection;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("Cannot connect to network", e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        return conn;
     }
 
     // Debit
@@ -20,7 +21,7 @@ public class invp {
         //String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         // find account for requested bank statement (credit check)
-        ResultSet retract_debit = state.executeQuery("SELECT * FROM InovDEBIT WHERE CARD-CODE=?");
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM InovDEBIT WHERE CARDCODE=?");
         String email = retract_debit.getString("EMAIL");
         String name = retract_debit.getString("NAME");
         retract_debit.close();
@@ -57,7 +58,7 @@ public class invp {
         //String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
         Statement state = connect().createStatement();
         // find account for requested bank statement (credit check)
-        ResultSet retract_debit = state.executeQuery("SELECT * FROM CREDITInov WHERE CARD-CODE=?");
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM InovCREDIT WHERE CARDCODE=?");
         String email = retract_debit.getString("EMAIL");
         String name = retract_debit.getString("NAME");
         retract_debit.close();
@@ -71,8 +72,8 @@ public class invp {
 
         Statement state = connect().createStatement();;
         // find account for requested bank statement (debit check)
-        ResultSet retract_debit = state.executeQuery("SELECT * FROM CREDITInov WHERE CARDCODE=?, WHERE NAME=?");
-        String charge = "UPDATE CREDITInov set CHECKING=CHECKING-? WHERE CARDCODE=?";
+        ResultSet retract_debit = state.executeQuery("SELECT * FROM InovCREDIT WHERE CARDCODE=?, WHERE NAME=?");
+        String charge = "UPDATE InovCREDIT set CHECKING=CHECKING-? WHERE CARDCODE=?";
         PreparedStatement stat = connect().prepareStatement(charge);
         stat.setDouble(1, price);
         stat.setString(2, CardCode);
@@ -87,6 +88,4 @@ public class invp {
         System.out.print(message);
     }
 }
-
-
 
