@@ -12,21 +12,24 @@ import java.nio.charset.StandardCharsets;
 import java.sql.*;
 import java.util.Scanner;
 
+// International Debit Account
 public class InternationalTransactions {
 
-    public Connection connect() {
-        // Database connection string
-        Connection conn = null;
-        // Statement state = null;
+    public static Connection connect() {
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            Class.forName("org.postgresql.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            System.out.println("Connecting to network.");
+            return connection;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("Cannot connect to network", e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        return conn;
     }
 
     public void International_exchange(String base_curr, String convert_curr, int cardcode, double amount, String name) throws IOException, SQLException {
+        Scanner scan = new Scanner(System.in);
         Character Line = '/';
         Character Line2 = '/';
         // Setting URL
@@ -48,166 +51,80 @@ public class InternationalTransactions {
         BigDecimal req_result = jsonobj.get("conversion_result").getAsBigDecimal();
         // String res = Double.toString(req_result);
         double res = req_result.doubleValue();
-        Scanner scan = new Scanner(System.in);
-        System.out.println("Select account");
+        // Account
+        System.out.println("Select account of receiver");
         System.out.println("1. Debit");
         System.out.println("2. Credit");
         System.out.println("3. International Debit");
         String read_accnt = scan.nextLine();
         if (read_accnt.equals("1")) {
-            send_money_debit(cardcode, res, convert_curr);
+            send_to_debit_international(cardcode, req_result, name, convert_curr);
         }
         if (read_accnt.equals("2")) {
-            send_Credit_to_debit(cardcode, res, convert_curr);
+            send_to_credit_international(cardcode, req_result, name, convert_curr);
         }
         if (read_accnt.equals("3")) {
-            send_money_debit_international(cardcode, res, name, base_curr);
+            send_money_international_debit(cardcode, req_result, name, convert_curr);
         }
 
     }
+
 
     // International Debit
-    public void send_money_debit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
-        String debit_transfer = "SELECT * FROM InovInterDEBIT WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
+    public void send_money_international_debit(int cardcode, BigDecimal amount, String recipient, String Country) throws SQLException {
         Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        // collect valued amount to be sent to recipient (debit check)
-        int card_code = retract_debit.getInt("CARDNUM");
-        if (card_code == cardcode) {
-            String retrieve = "UPDATE InovInterDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(retrieve);
-            stat.setDouble(1, amount);
-            stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM InovInterDEBIT  WHERE NAME=?";
-            ResultSet retract_credit_pay = state.executeQuery(accept1);
-            String email = retract_credit_pay.getString("EMAIL");
-            String accept = "UPDATE InovInterDEBIT set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(accept);
-            stat2.setDouble(1, amount);
-            stat2.setString(2, recipient);
-            stat.executeUpdate();
-            stat2.executeUpdate();
-            System.out.println("Transfer processed");
-            retract_debit.close();
-            //send_mail_International_transaction(email, amount, name, Country);
-        } else {
-            send_to_debit_international(cardcode, amount, recipient, Country);
-        }
-    }
-
-    public void send_to_debit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
-        String debit_transfer = "SELECT * FROM InovInterDEBIT WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        int card_code = retract_debit.getInt("CARDNUM");
-        if (card_code == cardcode) {
-            String retrieve = "UPDATE InovInterDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(retrieve);
-            stat.setDouble(1, amount);
-            stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM DEBITInov  WHERE NAME=?";
-            ResultSet retract_credit_pay = state.executeQuery(accept1);
-            String email = retract_credit_pay.getString("EMAIL");
-            String accept = "UPDATE DEBITInov set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(accept);
-            stat2.setDouble(1, amount);
-            stat2.setString(2, recipient);
-            stat.executeUpdate();
-            stat2.executeUpdate();
-            System.out.println("Transfer processed");
-            retract_debit.close();
-            //send_mail_International_transaction(email, amount, name, Country);
-        } else {
-            send_to_credit_international(cardcode, amount, recipient, Country);
-        }
-    }
-
-    public void send_to_credit_international(int cardcode, double amount, String recipient, String Country) throws SQLException {
-        String debit_transfer = "SELECT * FROM InovInterDEBIT WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
         // collect valued amount to be sent to recipient (debit check)
         String retrieve = "UPDATE InovInterDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
         PreparedStatement stat = connect().prepareStatement(retrieve);
-        stat.setDouble(1, amount);
+        stat.setBigDecimal(1, amount);
         stat.setInt(2, cardcode);
-        String accept1 = "SELECT * FROM CREDITInov  WHERE NAME=?";
-        ResultSet retract_credit_pay = state.executeQuery(accept1);
-        String email = retract_credit_pay.getString("EMAIL");
-        String accept = "UPDATE CREDITInov set CHECKING=CHECKING+? WHERE NAME=?";
-        PreparedStatement stat2 = connect().prepareStatement(accept);
-        stat2.setDouble(1, amount);
+        String accept2 = "UPDATE InovInterDEBIT set CHECKING=CHECKING+?, CURRENCY=? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(accept2);
+        stat2.setBigDecimal(1, amount);
         stat2.setString(2, recipient);
         stat.executeUpdate();
         stat2.executeUpdate();
-        retract_debit.close();
         System.out.println("Transfer processed");
         //send_mail_International_transaction(email, amount, name, Country);
     }
 
-    // Debit
-    public void send_money_debit(int cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
+
+    public void send_to_debit_international(int cardcode, BigDecimal amount, String recipient, String Country) throws SQLException {
         // collect valued amount to be sent to recipient (debit check)
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        String name = retract_debit.getString("NAME");
-        if (retract_debit.next()) {
-            String retrieve = "UPDATE InovDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
-            PreparedStatement stat = connect().prepareStatement(retrieve);
-            stat.setDouble(1, amount);
-            stat.setInt(2, cardcode);
-            String accept1 = "SELECT * FROM InovInterDEBIT WHERE NAME=?";
-            ResultSet retract_credit = state.executeQuery(accept1);
-            String email = retract_credit.getString("EMAIL");
-            String accept2 = "UPDATE InovInterDEBIT set CHECKING=CHECKING+? WHERE NAME=?";
-            PreparedStatement stat2 = connect().prepareStatement(accept2);
-            stat2.setDouble(1, amount);
-            stat2.setString(2, recipient);
-            stat.executeUpdate();
-            stat2.executeUpdate();
-            System.out.println("Transfer processed");
-            retract_debit.close();
-            //send_mail_transaction(email, amount, name);
-        } else {
-            System.out.println("Transfer not processed");
+        String retrieve = "UPDATE InovInterDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retrieve);
+        stat.setBigDecimal(1, amount);
+        stat.setInt(2, cardcode);
+        String accept = "UPDATE InovDEBIT set CHECKING=CHECKING+?, CURRENCY=? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(accept);
+        stat2.setBigDecimal(1, amount);
+        stat2.setString(2, Country);
+        stat2.setString(3, recipient);
+        stat.executeUpdate();
+        stat2.executeUpdate();
+        System.out.println("Transfer processed");
+
+    }
+
+    public void send_to_credit_international(int cardcode, BigDecimal amount, String recipient, String Country) throws SQLException {
+        // collect valued amount to be sent to recipient (debit check)
+        String retrieve = "UPDATE InovInterDEBIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
+        PreparedStatement stat = connect().prepareStatement(retrieve);
+        stat.setBigDecimal(1, amount);
+        stat.setInt(2, cardcode);
+        String accept = "UPDATE InovCREDIT set CHECKING=CHECKING+?, CURRENCY=? WHERE NAME=?";
+        PreparedStatement stat2 = connect().prepareStatement(accept);
+        stat2.setBigDecimal(1, amount);
+        stat2.setString(2, Country);
+        stat2.setString(3, recipient);
+        stat.executeUpdate();
+        stat2.executeUpdate();
+        System.out.println("Transfer processed");
+        //send_mail_International_transaction(email, amount, name, Country);
         }
     }
 
 
 
-    // Credit
-    public void send_Credit_to_debit(int cardcode, double amount, String recipient) throws SQLException {
-        String debit_transfer = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
-        // String credit_transfer = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        ResultSet retract_debit = state.executeQuery(debit_transfer);
-        //String name = retract_debit.getString("NAME");
-        String retrieve = "UPDATE InovCREDIT set CHECKING=CHECKING-? WHERE CARDNUM=?";
-        PreparedStatement stat = connect().prepareStatement(retrieve);
-        stat.setDouble(1, amount);
-        stat.setInt(2, cardcode);
-        String accept1 = "SELECT * FROM InovInterDEBIT WHERE NAME=?";
-        ResultSet retract_credit_pay = state.executeQuery(accept1);
-        //String email = retract_credit_pay.getString("EMAIL");
-        String accept = "UPDATE InovInterDEBIT set CHECKING=CHECKING+? WHERE NAME=?";
-        PreparedStatement stat2 = connect().prepareStatement(accept);
-        stat2.setDouble(1, amount);
-        stat2.setString(2, recipient);
-        stat.executeUpdate();
-        stat2.executeUpdate();
-        retract_debit.close();
-        retract_credit_pay.close();
-        System.out.println("Transfer processed");
-        //send_mail_transaction(email, amount, name);
-    }
-}
 
 
