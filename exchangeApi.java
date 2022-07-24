@@ -13,16 +13,17 @@ import java.util.Scanner;
 
 public class exchangeApi {
 
-    public Connection connect() {
-        // Database connection string
-        Connection conn = null;
-        // Statement state = null;
+    public static Connection connect() {
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            Class.forName("org.postgresql.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            System.out.println("Connecting to network.");
+            return connection;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("Cannot connect to network", e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        return conn;
     }
 
 
@@ -47,7 +48,7 @@ public class exchangeApi {
 
         // Accessing object
         BigDecimal req_result = jsonobj.get("conversion_rate").getAsBigDecimal();
-        double res = req_result.doubleValue();
+        //double res = req_result.doubleValue();
         // Account
         System.out.println("Select account");
         System.out.println("1. Debit");
@@ -55,127 +56,85 @@ public class exchangeApi {
         System.out.println("3. International Debit");
         String read_accnt = scan.nextLine();
         if (read_accnt.equals("1")) {
-            Currency_exchange_Debit(res, cardcode, convert_curr);
+            Currency_exchange_Debit(req_result, cardcode, convert_curr);
         }
         if (read_accnt.equals("2")) {
-            Currency_exchange_Credit(res, cardcode, convert_curr);
+            Currency_exchange_Credit(req_result, cardcode, convert_curr);
         }
         if (read_accnt.equals("3")) {
-            Currency_exchange_Debit_International(res, cardcode, convert_curr);
+            Currency_exchange_Debit_International(req_result, cardcode, convert_curr);
         }
     }
 
-    public void Currency_exchange_Debit(double rate_Debit, int cardcode, String convert_curr) throws SQLException, IOException {
-        PreparedStatement exch_Debit = connect().prepareStatement("SELECT * FROM InovDEBIT WHERE CARDNUM=?");
-        exch_Debit.setInt(1, cardcode);
-        ResultSet retract_credit = exch_Debit.executeQuery();
-        while (retract_credit.next()) {
-            double checking_balance = retract_credit.getDouble("CHECKING");
-            double rate_chec = checking_balance * rate_Debit;
-            double saving_balance = retract_credit.getDouble("SAVING");
-            double rate_sav = saving_balance * rate_Debit;
-            System.out.println("Currency Conversion processing");
-            echange_debit(cardcode, convert_curr, rate_chec, rate_sav);
 
-        }
-    }
-
-    public void echange_debit(int cardcode, String convert_curr, double rate_chec, double rate_sav) throws SQLException {
+    public void Currency_exchange_Debit(BigDecimal rate_Debit, int cardcode, String convert_curr) throws SQLException, IOException {
         String debit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
         PreparedStatement e_debit_state = connect().prepareStatement(debit_sql);
         e_debit_state.setInt(1, cardcode);
         // Debit account check
         ResultSet retract_debit = e_debit_state.executeQuery();
-        while (retract_debit.next()){
-            String credit_data = "UPDATE InovDEBIT set CHECKING=?, SAVING=?, CURRENCY=? WHERE CARDNUM=?";
+        if (retract_debit.next()) {
+            String credit_data = "UPDATE InovDEBIT set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, rate_chec);
-            stat.setDouble(2, rate_sav);
+            stat.setBigDecimal(1, rate_Debit);
+            stat.setBigDecimal(2, rate_Debit);
             stat.setString(3, convert_curr);
             stat.setInt(4, cardcode);
-            //stat.executeUpdate();
+            stat.executeUpdate();
             retract_debit.close(); // transaction complete
             //state.close();
-            connect().close();
             System.out.println("Conversion successful");
             //send_mail_deposit_Checking(email, deposit);
+
         }
     }
 
-
-    public void Currency_exchange_Debit_International(double rate_International_Debit, int cardcode, String convert_curr) throws SQLException, IOException {
-        PreparedStatement exch_Debit_International = connect().prepareStatement("SELECT * FROM InovDEBIT WHERE CARDNUM=?");
+    public void Currency_exchange_Debit_International(BigDecimal rate_International_Debit, int cardcode, String convert_curr) throws SQLException, IOException {
+        PreparedStatement exch_Debit_International = connect().prepareStatement("SELECT * FROM InovInterDEBIT WHERE CARDNUM=?");
         exch_Debit_International.setInt(1, cardcode);
         ResultSet retract_Debit_International = exch_Debit_International.executeQuery();
-        while (retract_Debit_International.next()) {
-            double checking_balance = retract_Debit_International.getDouble("CHECKING");
-            double rate_chec = checking_balance * rate_International_Debit;
-            double saving_balance = retract_Debit_International.getDouble("SAVING");
-            double rate_sav = saving_balance * rate_International_Debit;
-            System.out.println("Currency Conversion processing");
-            echange_Debit_International(cardcode, convert_curr, rate_chec, rate_sav);
-
-        }
-    }
-
-    public void echange_Debit_International(int cardcode, String convert_curr, double rate_chec, double rate_sav) throws SQLException {
-        String debit_sql = "SELECT * FROM InovDEBIT WHERE CARDNUM=?";
-        PreparedStatement e_Debit_International_state = connect().prepareStatement(debit_sql);
-        e_Debit_International_state.setInt(1, cardcode);
-        ResultSet retract_Debit_International = e_Debit_International_state.executeQuery();
-        while (retract_Debit_International.next()){
-            String credit_data = "UPDATE InovDEBIT set CHECKING=?, SAVING=?, CURRENCY=? WHERE CARDNUM=?";
+        if (retract_Debit_International.next()) {
+            String credit_data = "UPDATE InovInterDEBIT set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, rate_chec);
-            stat.setDouble(2, rate_sav);
+            stat.setBigDecimal(1, rate_International_Debit);
+            stat.setBigDecimal(2, rate_International_Debit);
             stat.setString(3, convert_curr);
             stat.setInt(4, cardcode);
-            //stat.executeUpdate();
+            stat.executeUpdate();
             retract_Debit_International.close(); // transaction complete
             //state.close();
-            connect().close();
             System.out.println("Conversion successful");
             //send_mail_deposit_Checking(email, deposit);
+
         }
     }
 
-    public void Currency_exchange_Credit(double rate_Credit, int cardcode, String convert_curr) throws SQLException, IOException {
+
+    public void Currency_exchange_Credit(BigDecimal rate_Credit, int cardcode, String convert_curr) throws SQLException, IOException {
         PreparedStatement stat2 = connect().prepareStatement("SELECT * FROM InovCREDIT WHERE CARDNUM=?");
         stat2.setInt(1, cardcode);
         ResultSet retract_credit = stat2.executeQuery();
-        while (retract_credit.next()) {
-            double checking_balance = retract_credit.getDouble("CHECKING");
-            double rate_chec = checking_balance * rate_Credit;
-            double saving_balance = retract_credit.getDouble("SAVING");
-            double rate_sav = saving_balance * rate_Credit;
-            System.out.println("Currency Conversion processing");
-            echange_credit(cardcode, convert_curr, rate_chec, rate_sav);
-
-        }
-    }
-
-    public void echange_credit(int cardcode, String convert_curr, double rate_chec, double rate_sav) throws SQLException {
-        String cred_sql = "SELECT * FROM InovCREDIT WHERE CARDNUM=?";
-        PreparedStatement e_credit_state = connect().prepareStatement(cred_sql);
-        e_credit_state.setInt(1, cardcode);
-        // Debit account check
-        ResultSet retract_e_credit = e_credit_state.executeQuery();
-        while (retract_e_credit.next()){
-            String credit_data = "UPDATE InovDEBIT set CHECKING=?, SAVING=?, CURRENCY=? WHERE CARDNUM=?";
+        if (retract_credit.next()) {
+            String credit_data = "UPDATE InovInterDEBIT set CHECKING=CHECKING/?, SAVING=SAVING/?, CURRENCY=? WHERE CARDNUM=?";
             PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setDouble(1, rate_chec);
-            stat.setDouble(2, rate_sav);
+            stat.setBigDecimal(1, rate_Credit);
+            stat.setBigDecimal(2, rate_Credit);
             stat.setString(3, convert_curr);
             stat.setInt(4, cardcode);
-            //stat.executeUpdate();
-            retract_e_credit.close(); // transaction complete
+            stat.executeUpdate();
+            retract_credit.close(); // transaction complete
             //state.close();
-            connect().close();
             System.out.println("Conversion successful");
             //send_mail_deposit_Checking(email, deposit);
+
         }
     }
 }
+
+
+
+
+
 
 
 
