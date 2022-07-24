@@ -5,49 +5,18 @@ public class BDMS {
     inov go = new inov();
 
     public static Connection connect() {
-        // Database connection string
-        Connection conn = null;
-        // Statement state = null;
         try {
-            conn = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            Class.forName("org.postgresql.Driver");
+            Connection connection = DriverManager.getConnection("jdbc:postgresql://localhost/inovjava", "postgres", "");
+            System.out.println("Connecting to network.");
+            return connection;
         } catch (SQLException e) {
-            System.out.println(e.getMessage());
+            throw new RuntimeException("Cannot connect to network", e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
         }
-        return conn;
     }
 
-    //delete account
-    public String delete_account(String Cardcode) throws SQLException {
-        String debit_sql = "SELECT * FROM DEBIT WHERE CARD-CODE=?";
-        String credit_sql = "SELECT * FROM CREDIT WHERE CARD-CODE=?";
-        Statement state = connect().createStatement();
-        // credit account check
-        ResultSet retract_credit = state.executeQuery(credit_sql);
-        String card_code = retract_credit.getString("CARD-CODE");
-        // Debit account check
-        ResultSet retract_debit = state.executeQuery(debit_sql);
-        String c_code = retract_debit.getString("CARD-CODE");
-        if (c_code.equals(Cardcode)) {
-            // deleting account
-            String debit_data = "DELETE FROM DEBIT WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(debit_data);
-            stat.setString(1, Cardcode);
-            stat.executeUpdate();
-            retract_debit.close();// account deleted
-        } else if (card_code.equals(Cardcode)) {
-            // deleting account
-            String credit_data = "DELETE FROM CREDIT WHERE CARD-CODE=?";
-            PreparedStatement stat = connect().prepareStatement(credit_data);
-            stat.setString(1, Cardcode);
-            stat.executeUpdate();
-            retract_debit.close();// account deleted
-        } else {
-            System.out.println("Account not found");
-        }
-        state.close();
-        connect().close();
-        return "account deleted";
-    }
 
     //Debit Account systems
     public static void debit_accounts() throws SQLException {
@@ -72,6 +41,17 @@ public class BDMS {
         }
     }
 
+    //delete account
+    public String delete_account_debit(int Cardnum) throws SQLException {
+        String debit_sql = "DELETE * FROM InovDEBIT WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        PreparedStatement stat = connect().prepareStatement(debit_sql);
+        stat.setDouble(1, Cardnum);
+        return "account deleted";
+
+    }
+
     public static void credit_accounts() throws SQLException {
         // String debit = "SELECT NAME, CARDNUM, CARDCODE, CHECKING, SAVING, ADDRESS, CURRENCY FROM DEBITInov";
         Statement state = connect().createStatement();
@@ -93,6 +73,16 @@ public class BDMS {
             System.out.println("Currency = " + currency);
             }
         }
+
+    //delete account
+    public String delete_account_credit(int Cardnum) throws SQLException {
+        String debit_sql = "DELETE * FROM InovCREDIT WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        PreparedStatement stat = connect().prepareStatement(debit_sql);
+        stat.setDouble(1, Cardnum);
+        return "account deleted";
+    }
 
     //International Debit Account systems
     public static void International_debit_accounts() throws SQLException {
@@ -116,12 +106,26 @@ public class BDMS {
             System.out.println("Currency = " + currency);
         }
     }
+
+    //delete account
+    public String delete_account_InternationalDebit(int Cardnum) throws SQLException {
+        String debit_sql = "DELETE * FROM InovInterDEBIT WHERE CARDNUM=?";
+        Statement state = connect().createStatement();
+        // Debit account check
+        PreparedStatement stat = connect().prepareStatement(debit_sql);
+        stat.setDouble(1, Cardnum);
+        return "account deleted";
+    }
+
         public static void main(String[] args) throws SQLException, ClassNotFoundException {
             credit_accounts();
             International_debit_accounts();
             debit_accounts();
     }
 }
+
+
+
 
 
 
